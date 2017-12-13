@@ -16,6 +16,8 @@
 *.i
 *._ip
 *.axf
+*.__i
+*.TMP
 
 # Precompiled Headers
 *.gch
