@@ -1,0 +1,39 @@
+L 1 "ModubusRTU.c"
+N#include "modbusRTU.h"
+L 1 "modbusRTU.h" 1
+N#ifndef __MODBUSRTU_H
+N#define __MODBUSRTU_H
+N
+N#define MODBUS_RTU_USE_UART 1
+N
+N#endif
+N
+N 
+L 2 "ModubusRTU.c" 2
+N
+N
+N
+N
+N
+N
+N
+N
+Nvoid modbus_init(void)
+N{
+N
+N}
+N
+Nvoid modbus_analyze(void)
+N{
+N
+N}
+N
+N
+N
+N
+N
+N
+N
+N
+N
+N
