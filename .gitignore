@@ -20,6 +20,11 @@
 # Precompiled Headers
 *.gch
 *.pch
+*.lnp
+*.htm
+*.html
+*.dep
+*.asm
 
 # Libraries
 *.lib
