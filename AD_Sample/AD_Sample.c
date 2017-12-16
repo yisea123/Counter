@@ -802,10 +802,6 @@ void counter_process (void)
 	AD_FILTER (After_filter, g_counter.AD_Value_p, 9, SAMPLE_NUM);
 	AD_FILTER (After_filter, g_counter.AD_Value_p, 10, SAMPLE_NUM);
 	AD_FILTER (After_filter, g_counter.AD_Value_p, 11, SAMPLE_NUM);
-
-	if (g_counter.set_watch_ch < CHANEL_NUM - 1){
-		After_filter[g_counter.set_watch_ch] = g_counter.sim_ad_value;
-	}
 	
 	r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
 	r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);

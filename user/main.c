@@ -149,7 +149,7 @@ int main (void)
 	}
 	my_println ("***************************SD Card Info**************************");
 	if (SD_Init()){
-		my_println ("SD Card Init Error! Please Check! ");
+		my_println ("SD Card Init Error! Please Check it! ");
 	}else{	
 		show_sdcard_info();	//打印SD卡相关信息
 	}
