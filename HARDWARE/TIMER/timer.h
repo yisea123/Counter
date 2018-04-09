@@ -17,7 +17,7 @@
  
 
 #define SYS_CLK 72
-#define TIM2_ARR  499
+#define TIM2_ARR  99 //100us
 #define TIM2_PSC  71
 
 #define TIM3_ARR  999

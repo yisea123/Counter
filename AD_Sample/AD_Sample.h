@@ -242,6 +242,7 @@ typedef struct
 	U32 complete_res;
 	U16 sim_ad_value;
 	U16 sim_flag;
+	U16 set_door_n_close_delay[CHANEL_NUM];
 }s_counter_info;
 
 void AD_filter(U16 _detect_chanel_index, U16 _chanel_pos_index);

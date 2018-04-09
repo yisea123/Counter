@@ -128,9 +128,9 @@ void Modbus_RegMap(void)
 		Modbus_HoldReg[i] = &Modbus_HoldReg_NULL;
 	}	
 //	MAP_MODBUS_HOLDREG(0, OSCPUUsage);
-	for (i = 0; i < 12; i++){
-		MAP_MODBUS_HOLDREG(0 + i, g_counter.ch[i].cur_count);
-	}
+//	for (i = 0; i < 12; i++){
+//		MAP_MODBUS_HOLDREG(0 + i, g_counter.ch[i].cur_count);
+//	}
 	MAP_MODBUS_HOLDREG(12, dma_irq_cycle);
 	MAP_MODBUS_HOLDREG(13, counter_process_time);
 	MAP_MODBUS_HOLDREG(14, tim2_irq_cycle);
@@ -261,6 +261,10 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(507, g_counter.min_interval.data.h);
 	MAP_MODBUS_HOLDREG(508, g_counter.min_interval.data.l);
 	
+	for (i = 0; i < 12; i++){
+		MAP_MODBUS_HOLDREG(512 + i, g_counter.set_door_n_close_delay[i]);
+	}
+	
 	save_para (0); //save_para(1) 保存参数save_para(0) 读取参数
 	Modbus_HoldReg_NULL = 0;
 	if (g_counter.set_std_up_v_offset < 1){
@@ -277,7 +281,10 @@ typedef struct{
 	char app_name[16];
 	u32 app_size;
 	char reg_info[16];
-	U16 SAVE_DATA[128];
+	U16 SAVE_DATA[MODBUS_SAVE_DATA_NUM];
+#ifdef USE_SAVE_DATA_EX
+	U16 SAVE_DATA_EX[MODBUS_SAVE_DATA_NUM_EX];
+#endif
 }s_spi_file;
 
 int save_para (int flag)
@@ -314,11 +321,21 @@ int save_para (int flag)
 		for (i = 0; i < MODBUS_SAVE_DATA_NUM; i++){
 			spi_flash_info->SAVE_DATA[i] = *Modbus_HoldReg[MODBUS_SAVE_DATA_START + i];
 		}
+	#ifdef USE_SAVE_DATA_EX
+		for (i = 0; i < MODBUS_SAVE_DATA_NUM_EX; i++){
+			spi_flash_info->SAVE_DATA_EX[i] = *Modbus_HoldReg[MODBUS_SAVE_DATA_START_EX + i];
+		}
+	#endif
 		W25QXX_Write ((U8*)spi_flash_info, SPI_FLASH_INFO_ADDR, sizeof(s_spi_file));
 	}else if(flag == 0){//读取参数
 		for (i = 0; i < MODBUS_SAVE_DATA_NUM; i++){
 			*Modbus_HoldReg[MODBUS_SAVE_DATA_START + i] = spi_flash_info->SAVE_DATA[i];
 		}
+	#ifdef USE_SAVE_DATA_EX
+		for (i = 0; i < MODBUS_SAVE_DATA_NUM_EX; i++){
+			*Modbus_HoldReg[MODBUS_SAVE_DATA_START_EX + i] = spi_flash_info->SAVE_DATA_EX[i];
+		}
+	#endif
 		if ((g_counter.set_std_down_v_offset < 1) || (g_counter.set_std_down_v_offset > 100)){
 			g_counter.set_std_down_v_offset = 5;
 		}
@@ -646,7 +663,9 @@ void Modbus_06_Handle(u8 * _data_buf)
 		*Modbus_HoldReg[startRegAddr] |= _data_buf[5];//低字节在后
 		
 		DATA_RANGE_CHECK ();
-		if ((startRegAddr < MODBUS_SAVE_DATA_START + MODBUS_SAVE_DATA_NUM + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START))
+		if (((startRegAddr < MODBUS_SAVE_DATA_START + MODBUS_SAVE_DATA_NUM + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START)) ||
+			  ((startRegAddr < MODBUS_SAVE_DATA_START_EX + MODBUS_SAVE_DATA_NUM_EX + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START_EX)) 
+			 )
 		{
 			data_change_flag = 1;
 			save_para (1); //save_para(1) 保存参数save_para(0) 读取参数

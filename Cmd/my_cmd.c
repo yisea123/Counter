@@ -603,9 +603,10 @@ void fill_rec_buf(char data)
 			{
 				uart1_send_data('\b');
 				uart1_send_data(' ');
-				uart1_send_data (0x1b);
-				uart1_send_data (0x5b);
-				uart1_send_data (0x44);
+				uart1_send_data('\b');
+				//uart1_send_data (0x1b);
+				//uart1_send_data (0x5b);
+				//uart1_send_data (0x44);
 				rec_count--;
 				cmd_analyze.rec_buf[rec_count] = ' ';
 			}

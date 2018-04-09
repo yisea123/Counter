@@ -506,10 +506,10 @@ int save_detect_data (U16 _ch, U16 * _index, U16 _ad_value)
 }
 
 #define CASE_CH(CH) case CH: if (DOOR_##CH == 1){ \
-	if (g_counter.set_door_close_delay == 0){ \
+	if (g_counter.set_door_n_close_delay[CH] == 0){ \
 		DOOR_##CH = 0; \
 	}else if (_ch->door_close_delay == 0){/*如果door_close_delay等于0，说明此刻没有在计时*/ \
-		_ch->door_close_delay = g_counter.set_door_close_delay;/*小料门关闭延时*/ \
+		_ch->door_close_delay = g_counter.set_door_n_close_delay[CH];/*小料门关闭延时*/ \
 	} \
 	_ch->close_interval.data_hl = _ch->interval.data_hl; \
 	if (_ch->close_interval.data_hl < g_counter.set_min_interval.data_hl){/*小料门关闭时药粒间隔太小*/  \

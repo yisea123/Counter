@@ -8,7 +8,16 @@
 #define MODBUS_VIRTUAL_INPUT_NUM 8
 #define MODBUS_INPUT_NUM 8
 #define MODBUS_OUTPUT_NUM 20 + MODBUS_VIRTUAL_INPUT_NUM
-#define MODBUS_REG_NUM 512
+#define MODBUS_REG_NUM (512+512)
+
+
+
+#define USE_SAVE_DATA_EX
+#ifdef USE_SAVE_DATA_EX
+	#define MODBUS_SAVE_DATA_NUM_EX 12
+	#define MODBUS_SAVE_DATA_SIZE_EX (MODBUS_SAVE_DATA_NUM_EX * 2)
+	#define MODBUS_SAVE_DATA_START_EX 512
+#endif
 
 #define MODBUS_SAVE_DATA_NUM 30
 #define MODBUS_SAVE_DATA_SIZE (MODBUS_SAVE_DATA_NUM * 2)
@@ -19,10 +28,6 @@
 
 extern U16 Modbus_HoldReg_CPU_Usage;
 
-typedef struct 
-{
-	U16 data[MODBUS_SAVE_DATA_NUM];
-}s_modbus_save_data;
 
 
 u16 CRC16(u8 *data_buf, u16 len);
