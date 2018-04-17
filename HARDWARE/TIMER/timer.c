@@ -175,7 +175,9 @@ void TIM3_IRQHandler(void)   //TIM3中断
 		}
 		if (tim3_count == 1000){
 		////////////////////////////////////////////////////////////////////////
-			process_rdy++;
+			if (process_rdy < PROCESS_RDY){
+				process_rdy++;
+			}
 			tim3_count = 0;
 //			if (!VIBRATE_SWITCH){
 //				TIM_Cmd(TIM6, ENABLE);  //使能TIMx外设		
@@ -338,9 +340,12 @@ unsigned long long get_tim5_ticks_old (void)
 void refresh_dma1_cycle (void)
 {
 	//tim5_dma_cur_cnt = tim5_ticks * 65536 + TIM5->CNT
-	tim5_dma_cur_cnt = (tim5_ticks << 16) + TIM5->CNT - tim5_ticks;
+	tim5_dma_cur_cnt = (tim5_ticks << 16) + TIM5->CNT;
 	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
 	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
+	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
+		counter_process_state = 0xE001;
+	}
 }
 
 void refresh_adc1_cycle (void)

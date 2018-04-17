@@ -209,7 +209,7 @@ void start_task(void *pdata)
 	TIM3_PWM_Init (TIM3_ARR, TIM3_PSC); //1ms
 	TIM4_PWM_Init (TIM4_ARR, TIM4_PSC); //1ms
 	TIM5_PWM_Init (TIM5_ARR, TIM5_PSC); //65.536ms
-	TIM6_PWM_Init (TIM6_ARR, TIM6_PSC); //10us
+	TIM6_PWM_Init (TIM6_ARR, TIM6_PSC); //250us
 	TIM7_PWM_Init (TIM7_ARR, TIM7_PSC); //4ms
 	
 	led_init ();
@@ -439,7 +439,10 @@ void led1_task(void *pdata)
 	{ 
 		if (my_env.is_registered == REGISTERED){
 			LED2 = !LED2;
-			delay_ms(200); 
+			delay_ms(100); 
+			if (counter_process_state == 0xE001){
+				delay_ms(400); 
+			}
 		}else{
 			//闪烁三次然后停2秒，提示未注册
 			LED2 = !LED2;

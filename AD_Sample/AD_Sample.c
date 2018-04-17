@@ -262,14 +262,14 @@ void ADC1_2_IRQHandler(void)
 		ADC_ClearITPendingBit(ADC1, ADC_IT_AWD); 
 	}else{
 		chanel_pos_index++; //采样处理下一个光敏二极管
-		if (chanel_pos_index < CHANEL_SENSOR_NUM){
-		}else{
-			chanel_pos_index = 0;
-		}
+		chanel_pos_index %= CHANEL_SENSOR_NUM;
 		WRITE_SENSOR_ADDR(chanel_pos_index);//采样处理下一个光敏二极管
+		
 		ADC_sync_signal++;
 		if ( ADC_sync_signal < SAMPLE_NUM){
 			ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+		}else{
+			ADC_sync_signal = 0;
 		}
 		ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);      //清除ADCx的中断待处理位
 	}
@@ -323,11 +323,11 @@ void counter_process (void);
 		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
 				BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
 		/*AD[C] /= S; */ \
-		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
-		g_counter.ch[C].ad_fitter_index++; \
 		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
 			g_counter.ch[C].ad_fitter_index = 0; \
 		} \
+		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
+		g_counter.ch[C].ad_fitter_index++; \
 		if (process_rdy > START_DATA){ \
 			if (AD[C] > g_counter.ch[C].ad_max){ \
 				g_counter.ch[C].ad_max = AD[C]; \
@@ -370,9 +370,6 @@ void DMA1_Channel1_IRQHandler(void)
 	if(DMA_GetITStatus(DMA1_IT_TC1)){
 		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
 		if (process_rdy < PROCESS_RDY){
-			g_counter.buf_index = 0;
-			g_counter.AD_Value_p = AD_Value_0;
-			AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
 			GET_STD_AD_V (After_filter, AD_Value_0, 0, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, AD_Value_0, 1, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, AD_Value_0, 2, SAMPLE_NUM);
@@ -385,6 +382,9 @@ void DMA1_Channel1_IRQHandler(void)
 			GET_STD_AD_V (After_filter, AD_Value_0, 9, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, AD_Value_0, 10, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, AD_Value_0, 11, SAMPLE_NUM);
+			AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
+			g_counter.buf_index = 0;
+			g_counter.AD_Value_p = AD_Value_0;
 			if ((process_rdy + 1) == PROCESS_RDY){
 				process_rdy++;
 				COUNTER_FINISH_OP ();
@@ -405,14 +405,14 @@ void DMA1_Channel1_IRQHandler(void)
 		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
 				BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
 		 /*AD[C] /= S; */\
+		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
+			g_counter.ch[C].ad_fitter_index = 0; \
+		} \
 		g_counter.ch[C].ad_averaged_value -= g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index]; \
 		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
 		g_counter.ch[C].ad_averaged_value += AD[C]; \
 		AD[C] = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
 		g_counter.ch[C].ad_fitter_index++; \
-		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
-			g_counter.ch[C].ad_fitter_index = 0; \
-		} \
 		if (AD[C] > g_counter.ch[C].ad_max){ \
 			g_counter.ch[C].ad_max = AD[C]; \
 		} \
@@ -479,9 +479,9 @@ int AD_Sample_init (void)
 
 void AD_Start_Sample (u32 _memBaseAddr)
 {
-	ADC_sync_signal = 0;//AD 信号清零 采样同步
 	/* Write to DMA1 Channel4 CMAR */
 	DMA1_Channel1->CMAR = _memBaseAddr;
+	ADC_sync_signal = 0;//AD 信号清零 采样同步
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
 
@@ -493,6 +493,9 @@ int save_detect_data (U16 _ch, U16 * _index, U16 _ad_value)
 //	{
 //		_ad_value = _ad_value;
 //	}
+	if (my_env.dma_state == 1){
+		return 0;
+	}
 	if (_ch == g_counter.set_watch_ch){
 		if ((*_index) < DETECTG_BUF_SIZE){
 			Detect_Buf[*_index] = _ad_value;
@@ -613,7 +616,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				///////////////////////////////////////////////////////////////////////////////////////////
 				_ch->cur_count++;
 				if (_ch->counter_state == NORMAL_COUNT){//通道正常数粒状态
-					if ((g_counter.total_count + 1)  <= g_counter.set_count){//判断当前这粒是属于哪一瓶
+					if ((g_counter.total_count + 1) <= g_counter.set_count){//判断当前这粒是属于哪一瓶
 						g_counter.total_count++;
 						if (g_counter.total_count == g_counter.set_count){
 							g_counter.counter_state = PRE_COUNT;//数粒机进入预数粒状态
@@ -781,12 +784,12 @@ void counter_process (void)
 //////////////////////////////////////////////////////////////////////////////////
 	
 	if (g_counter.buf_index == 0){
-		g_counter.AD_Value_p = AD_Value_0;
 		AD_Start_Sample ((u32) AD_Value_1);//滤波完就开启转换
-		g_counter.buf_index++;
+		g_counter.AD_Value_p = AD_Value_0;
+		g_counter.buf_index = 1;
 	}else {
-		g_counter.AD_Value_p = AD_Value_1;
 		AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
+		g_counter.AD_Value_p = AD_Value_1;
 		g_counter.buf_index = 0;
 	}
 
@@ -835,7 +838,7 @@ void counter_process (void)
 		}
 	}
 	
-	counter_process_state = r_code;
+//	counter_process_state = r_code;
 //////////////////////////////// process end /////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
