@@ -406,17 +406,8 @@ void io_task (void *pdata)
 		}
 		
 		if (virtual_input[1] == 0){//重新调整
-			int i;
 			virtual_input[1] = 1;
-			COUNT_COMPLETE = 1;
-			VIBRATE_SWITCH = 1;
-			process_rdy = 0;
-			for (i = 0; i < CHANEL_NUM; i++){
-				g_counter.ch[i].ad_max = 0;
-				g_counter.ch[i].ad_min = 0xFFFF;
-				g_counter.ch[i].std_v = 0;
-				g_counter.ch[i].ad_averaged_value = 0;
-			}
+			re_calibration_detect();
 		}
 		if (virtual_input[3] == 0){//复位
 			virtual_input[3] = 1;

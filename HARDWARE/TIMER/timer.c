@@ -304,8 +304,6 @@ void TIM5_PWM_Init(u16 arr,u16 psc)
 
 //定时器4中断服务程序
 //unsigned long long tim5_ticks = 0;
-uint16_t tim5_dma_cur_cnt = 0;
-uint16_t tim5_dma_pre_cnt = 0;
 uint16_t tim5_adc1_cur_cnt = 0;
 uint16_t tim5_adc1_pre_cnt = 0;
 void TIM5_IRQHandler(void)   //TIM5中断
@@ -317,16 +315,16 @@ void TIM5_IRQHandler(void)   //TIM5中断
 	}
 }
 
-void refresh_dma1_cycle (void)
-{
-	//tim5_dma_cur_cnt = tim5_ticks * 65536 + TIM5->CNT
-	tim5_dma_cur_cnt = TIM5->CNT;
-	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
-	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
-	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
-		counter_process_state = 0xE001;
-	}
-}
+//void refresh_dma1_cycle (void)
+//{
+//	//tim5_dma_cur_cnt = tim5_ticks * 65536 + TIM5->CNT
+//	tim5_dma_cur_cnt = TIM5->CNT;
+//	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
+//	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
+//	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
+//		counter_process_state = 0xE001;
+//	}
+//}
 
 void refresh_adc1_cycle (void)
 {

@@ -4,8 +4,13 @@
 s_counter_info g_counter;
 
 U16 process_rdy = 0;
-vu16 AD_Value_0[SAMPLE_NUM][CHANEL_NUM]; //用来存放ADC转换结果，也是DMA的目标地址
-vu16 AD_Value_1[SAMPLE_NUM][CHANEL_NUM]; //用来存放ADC转换结果，也是DMA的目标地址
+typedef struct {
+	vu16 AD_Value_0[SAMPLE_NUM][CHANEL_NUM]; //用来存放ADC转换结果，也是DMA的目标地址
+	vu16 AD_Value_1[SAMPLE_NUM][CHANEL_NUM]; //用来存放ADC转换结果，也是DMA的目标地址
+	vu16 AD_Value_2[SAMPLE_NUM][CHANEL_NUM]; //用来存放ADC转换结果，也是DMA的目标地址
+}s_AD_buf;
+
+s_AD_buf AD_DMA_buf;
 u16 After_filter[CHANEL_NUM]; //用来存放求平均值之后的结果
 
 
@@ -29,12 +34,11 @@ void counter_init (void)
 	
 	memset ((void *)Detect_Buf, 0, sizeof(Detect_Buf));
 	memset ((void *)After_filter, 0, sizeof(After_filter));
-	memset ((void *)AD_Value_0, 0, sizeof(AD_Value_0));
-	memset ((void *)AD_Value_1, 0, sizeof(AD_Value_1));
+	memset ((void *)&AD_DMA_buf, 0, sizeof(AD_DMA_buf));
 	
 	COUNT_COMPLETE = 1;
 	
-	g_counter.AD_buf_p = AD_Value_0;
+	g_counter.AD_buf_p = 0;
 	g_counter.AD_use_buf_index = 0;
 	g_counter.counter_state = COUNTER_IDLE;
 	
@@ -160,32 +164,40 @@ void AD_GPIO_Configuration(void)
 }
 
 
-void ADC1_Configuration(void)
+
+void set_adc1_sample_time (void)
 {
-	#define SAMPLE_TIME ADC_SampleTime_7Cycles5//ADC_SampleTime_28Cycles5// ADC_SampleTime_7Cycles5 
-	ADC_InitTypeDef ADC_InitStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	
-	
-
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE ); //使能ADC1通道时钟，各个管脚时钟
-
-	RCC_ADCCLKConfig(RCC_PCLK2_Div6); //72M/6=12,ADC最大时间不能超过14M
-
-	ADC_DeInit(ADC1); //将外设 ADC1 的全部寄存器重设为缺省值
-
-	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent; //ADC工作模式:ADC1和ADC2工作在独立模式
-	ADC_InitStructure.ADC_ScanConvMode =ENABLE; //模数转换工作在扫描模式
-	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE; //模数转换工作在连续转换模式
-	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //外部触发转换关闭
-	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right; //ADC数据右对齐
-	ADC_InitStructure.ADC_NbrOfChannel = CHANEL_NUM; //顺序进行规则转换的ADC通道的数目
-	ADC_Init(ADC1, &ADC_InitStructure); //根据ADC_InitStruct中指定的参数初始化外设ADCx的寄存器
-
-
-	//设置指定ADC的规则组通道，设置它们的转化顺序和采样时间
-	//ADC1,ADC通道x,规则采样顺序值为y,采样时间为239.5周期
-#if 1
+	#define SAMPLE_TIME sample_time//ADC_SampleTime_28Cycles5// ADC_SampleTime_7Cycles5 //ADC_SampleTime_71Cycles5 //ADC_SampleTime_239Cycles5
+	uint8_t sample_time = ADC_SampleTime_55Cycles5;
+		//设置指定ADC的规则组通道，设置它们的转化顺序和采样时间
+	switch (g_counter.set_adc_mode)
+	{
+//		case 0:
+//			sample_time = ADC_SampleTime_1Cycles5;
+//			break;
+		case 1:
+			sample_time = ADC_SampleTime_7Cycles5;
+			break;
+		case 2:
+			sample_time = ADC_SampleTime_13Cycles5;
+			break;
+		case 3:
+			sample_time = ADC_SampleTime_28Cycles5;
+			break;
+		case 4:
+			sample_time = ADC_SampleTime_41Cycles5;
+			break;
+		case 5:
+			sample_time = ADC_SampleTime_55Cycles5;
+			break;
+		case 6:
+			sample_time = ADC_SampleTime_71Cycles5;
+			break;
+		case 7:
+			sample_time = ADC_SampleTime_239Cycles5;
+			break;
+		default:break;
+	}
 	ADC_RegularChannelConfig(ADC1, CH0, 1, SAMPLE_TIME );
 	ADC_RegularChannelConfig(ADC1, CH1, 2, SAMPLE_TIME );
 	ADC_RegularChannelConfig(ADC1, CH2, 3, SAMPLE_TIME );
@@ -198,28 +210,38 @@ void ADC1_Configuration(void)
 	ADC_RegularChannelConfig(ADC1, CH9, 10, SAMPLE_TIME );
 	ADC_RegularChannelConfig(ADC1, CH10, 11, SAMPLE_TIME );
 	ADC_RegularChannelConfig(ADC1, CH11, 12, SAMPLE_TIME );
-#else
-	ADC_RegularChannelConfig(ADC1, CH0, 1, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 2, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 3, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 4, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 5, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 6, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 7, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 8, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 9, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 10, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 11, SAMPLE_TIME );
-	ADC_RegularChannelConfig(ADC1, CH0, 12, SAMPLE_TIME );
-#endif
+}
+
+void ADC1_Configuration(void)
+{
+	ADC_InitTypeDef ADC_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	
+	
+
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE ); //使能ADC1通道时钟，各个管脚时钟
+
+	RCC_ADCCLKConfig(RCC_PCLK2_Div6); //72M/6=12,ADC最大时间不能超过14M
+
+	ADC_DeInit(ADC1); //将外设 ADC1 的全部寄存器重设为缺省值
+
+	ADC_InitStructure.ADC_Mode = ADC_Mode_Independent; //ADC工作模式:ADC1和ADC2工作在独立模式
+	ADC_InitStructure.ADC_ScanConvMode = ENABLE; //模数转换工作在扫描模式
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE; //模数转换工作在连续转换模式
+	ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //外部触发转换关闭
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right; //ADC数据右对齐
+	ADC_InitStructure.ADC_NbrOfChannel = CHANEL_NUM; //顺序进行规则转换的ADC通道的数目
+	ADC_Init(ADC1, &ADC_InitStructure); //根据ADC_InitStruct中指定的参数初始化外设ADCx的寄存器
+
+	set_adc1_sample_time ();
 
 	// 开启ADC的DMA支持（要实现DMA功能，还需独立配置DMA通道等参数）
 	ADC_DMACmd(ADC1, ENABLE);
 	
 	//开启模拟看门狗
-	ADC_AnalogWatchdogThresholdsConfig(ADC1,0xfff,0);
-	ADC_AnalogWatchdogCmd(ADC1,ADC_AnalogWatchdog_AllRegEnable);
-	ADC_ITConfig(ADC1, ADC_IT_AWD, ENABLE);//允许模拟看门狗中断
+//	ADC_AnalogWatchdogThresholdsConfig(ADC1,0xfff,0);
+//	ADC_AnalogWatchdogCmd(ADC1,ADC_AnalogWatchdog_AllRegEnable);
+//	ADC_ITConfig(ADC1, ADC_IT_AWD, ENABLE);//允许模拟看门狗中断
 
 	//使能ADC中断
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
@@ -242,6 +264,21 @@ void ADC1_Configuration(void)
 	while(ADC_GetCalibrationStatus(ADC1)); //获取指定ADC1的校准程序,设置状态则等待
 }
 
+void re_calibration_detect (void)
+{
+	int i;
+	COUNT_COMPLETE = 1;
+	VIBRATE_SWITCH = 1;
+	process_rdy = 0;
+	set_adc1_sample_time ();
+	for (i = 0; i < CHANEL_NUM; i++){
+		g_counter.ch[i].ad_max = 0;
+		g_counter.ch[i].ad_min = 0xFFFF;
+		g_counter.ch[i].std_v = 0;
+		g_counter.ch[i].ad_averaged_value = 0;
+	}
+}
+
 
 U16 detect_chanel_index = 0xFFFF;//检测通道索引
 U16 chanel_pos_index = 0;	//通道光敏二极管位置索引	
@@ -256,23 +293,18 @@ void ADC1_2_IRQHandler(void)
 //	tick_old = get_tim5_ticks();
 //	refresh_adc1_cycle ();
 ///////////////////////////////////////////////////////////////////////////////
-	if (ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET){//电眼故障时进这里
-		detect_chanel_index = CHANEL_NUM - (DMA_GetCurrDataCounter (DMA1_Channel1) % CHANEL_NUM);
-		ADC_ClearFlag(ADC1, ADC_FLAG_AWD);
-		ADC_ClearITPendingBit(ADC1, ADC_IT_AWD); 
-	}else{
+//	if (ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET){//电眼故障时进这里
+//		detect_chanel_index = CHANEL_NUM - (DMA_GetCurrDataCounter (DMA1_Channel1) % CHANEL_NUM);
+//		ADC_ClearFlag(ADC1, ADC_FLAG_AWD);
+//		ADC_ClearITPendingBit(ADC1, ADC_IT_AWD); 
+//	}else
+//	if (ADC_GetITStatus(ADC1, ADC_IT_EOC)){//这里不用判断ADC_IT_EOC是否置位，因为用了DMA后，转换完成硬件会清零ADC_IT_EOC位
 		chanel_pos_index++; //采样处理下一个光敏二极管
 		chanel_pos_index %= CHANEL_SENSOR_NUM;
 		WRITE_SENSOR_ADDR(chanel_pos_index);//采样处理下一个光敏二极管
-		
-		ADC_sync_signal++;
-		if ( ADC_sync_signal < SAMPLE_NUM){
-			ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-		}else{
-			ADC_sync_signal = 0;
-		}
-		ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);      //清除ADCx的中断待处理位
-	}
+//		ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);//这里不用清除ADCx的中断待处理位，因为用了DMA后，转换完成硬件会清零ADC_IT_EOC位
+		ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+//	}
 ////////////////////////////////////////////////////////////////////
 //	ADC1_process_time = get_tim5_ticks () - tick_old + 2;  	
 }
@@ -287,9 +319,9 @@ void AD1_DMA_Configuration(void)
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE); //使能DMA传输
 	DMA_DeInit(DMA1_Channel1); //将DMA的通道1寄存器重设为缺省值
 	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&ADC1->DR; //DMA外设ADC基地址
-	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&AD_Value_0; //DMA内存基地址
+	DMA_InitStructure.DMA_MemoryBaseAddr = (u32)&AD_DMA_buf; //DMA内存基地址
 	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC; //内存作为数据传输的目的地
-	DMA_InitStructure.DMA_BufferSize = SAMPLE_NUM * CHANEL_NUM; //DMA通道的DMA缓存的大小
+	DMA_InitStructure.DMA_BufferSize = SAMPLE_NUM * CHANEL_NUM * 2; //DMA通道的DMA缓存的大小
 	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable; //外设地址寄存器不变
 	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable; //内存地址寄存器递增
 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord; //数据宽度为16位
@@ -299,7 +331,7 @@ void AD1_DMA_Configuration(void)
 	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable; //DMA通道x没有设置为内存到内存传输
 	DMA_Init(DMA1_Channel1, &DMA_InitStructure); //根据DMA_InitStruct中指定的参数初始化DMA的通道
 	
-	DMA_ITConfig(DMA1_Channel1, DMA_IT_TC,ENABLE); //传输结束中断
+	DMA_ITConfig(DMA1_Channel1, DMA_IT_TC | DMA_IT_HT, ENABLE); //传输结束中断
      
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = DMA1_1_INT_PREEM;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = DMA1_1_INT_SUB;
@@ -737,30 +769,31 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 
 u16 counter_process_time = 0;
 u16 dma_irq_cycle = 0;
+uint16_t tim5_dma_cur_cnt = 0;
+uint16_t tim5_dma_pre_cnt = 0;
 void DMA1_Channel1_IRQHandler(void)
 {     
 	static int process_rdy_old = 0;
-	uint16_t tick_old;
 	int r_code = 0, i;
-	tick_old = get_tim5_ticks();
-	refresh_dma1_cycle (); //先统计DMA中断周期
+	//tick_old = get_tim5_ticks();
+	//refresh_dma1_cycle (); //先统计DMA中断周期
+	tim5_dma_cur_cnt = get_tim5_ticks();
+	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
+	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
+	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
+		counter_process_state = 0xE001;
+	}
 /////////////////////////////////////////////////////////////////////////////////
 //	u8 count;
-//	if(DMA_GetITStatus(DMA1_IT_HT1)){
-//		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
-//		i = DMA1_Channel1->CNDTR;
-//	}else 
-	if(DMA_GetITStatus(DMA1_IT_TC1)){
-		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
-		if (g_counter.AD_use_buf_index == 0){
-			AD_Start_Sample ((u32) AD_Value_1);//滤波完就开启转换
-			g_counter.AD_use_buf_index = 1;
-			g_counter.AD_buf_p = AD_Value_0;
-		}else {
-			AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
-			g_counter.AD_use_buf_index = 0;
-			g_counter.AD_buf_p = AD_Value_1;
-		}
+	if(DMA_GetITStatus(DMA1_IT_HT1)){
+		g_counter.AD_buf_p = AD_DMA_buf.AD_Value_0;
+	}else if(DMA_GetITStatus(DMA1_IT_TC1)){
+		g_counter.AD_buf_p = AD_DMA_buf.AD_Value_1;
+	}else if (DMA_GetITStatus(DMA1_IT_TC1)){
+		g_counter.AD_buf_p = 0;
+	}
+	DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
+	if (g_counter.AD_buf_p != 0){
 		if (process_rdy < PROCESS_RDY){	
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 0, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 1, SAMPLE_NUM);
@@ -774,6 +807,7 @@ void DMA1_Channel1_IRQHandler(void)
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 9, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
+
 			if ((process_rdy + 1) == PROCESS_RDY){
 				for (i = 0; i < CHANEL_NUM; i++){
 					if (g_counter.ch[i].std_v > STD_UP_V_OFFSET) { 
@@ -810,7 +844,7 @@ void DMA1_Channel1_IRQHandler(void)
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
 			
-			//After_filter[0] = g_counter.sim_ad_value;
+			After_filter[0] = g_counter.sim_ad_value;
 			r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
 			r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);
 			r_code += count_piece (&g_counter.ch[2], After_filter[2], 2);
@@ -850,7 +884,7 @@ void DMA1_Channel1_IRQHandler(void)
 		}
 	} 
 //////////////////////////////////////////////////////////////////////
-	counter_process_time = get_tim5_ticks () - tick_old + 2;  	
+	counter_process_time = get_tim5_ticks () - tim5_dma_cur_cnt + 2;  	
 }
 
 

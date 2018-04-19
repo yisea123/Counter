@@ -205,6 +205,7 @@ typedef struct
 	U16 total_count;
 	U16 counter_state;
 	U16 set_door_close_delay;
+	U16 set_adc_mode;
 	U16 set_pre_count;
 	U16 pre_count;
 	U16 total_reject;
@@ -247,6 +248,7 @@ typedef struct
 
 void AD_filter(U16 _detect_chanel_index, U16 _chanel_pos_index);
 int AD_Sample_init (void);
+void re_calibration_detect (void);
 u16 GetVolt(u16 advalue);
 extern u16 After_filter[CHANEL_NUM]; //用来存放求平均值之后的结果
 extern s_counter_env counter_env;
