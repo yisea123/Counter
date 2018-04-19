@@ -210,11 +210,11 @@ typedef struct
 	U16 total_reject;
 	U16 total_good;
 	U16 dma_buf_index;
-	U16 buf_index;
+	U16 AD_use_buf_index;
 	U16 set_watch_ch;
 	U32 dma_buf_addr;
 	U32 buf_addr;
-	vu16 (* AD_Value_p)[CHANEL_NUM];
+	vu16 (* AD_buf_p)[CHANEL_NUM];
 	U16 counter_step;
 	U16 set_std_up_v_offset;
 	U16 set_std_down_v_offset;
@@ -272,7 +272,7 @@ extern u16 wave_down_flag;
 extern u16 wave_up_flag;
 extern u16 wave_up_value;
 
-void counter_process (void);
+//void counter_process (void);
 void counter_init (void);
 void counter_reset (void);
 void counter_data_clear(void);

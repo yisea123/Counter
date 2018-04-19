@@ -49,14 +49,15 @@ void TIM2_Int_Init(u16 arr,u16 psc)
 	TIM_Cmd(TIM2, ENABLE);  //使能TIMx外设							 
 }
 //定时器2中断服务程序
-u16 tim2_irq_cycle = 0;
+u16 tim2_irq_process_time = 0;
 #define CHECK_DOOR_CLOSE_FLAG(CH) if (g_counter.ch[CH].door_close_delay > 0){ \
 				g_counter.ch[CH].door_close_delay--; \
 				if ((g_counter.ch[CH].door_close_delay == 0) && (g_counter.counter_state == PRE_COUNT)){ \
 					DOOR_##CH = 0; \
 				} \
 			}
-			
+
+uint32_t sys_run_time	= 0;//100us的精度
 void TIM2_IRQHandler(void)   //TIM2中断
 {
 	unsigned long long tick_old;
@@ -65,6 +66,7 @@ void TIM2_IRQHandler(void)   //TIM2中断
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) //检查指定的TIM中断发生与否:TIM 中断源 
 	{
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);  //清除TIMx的中断待处理位:TIM 中断源  
+		sys_run_time++;
 		CHECK_DOOR_CLOSE_FLAG (0);
 		CHECK_DOOR_CLOSE_FLAG (1);
 		CHECK_DOOR_CLOSE_FLAG (2);
@@ -79,7 +81,7 @@ void TIM2_IRQHandler(void)   //TIM2中断
 		CHECK_DOOR_CLOSE_FLAG (11);
 	}
 ///////////////////////////////////////////////////////////////////////////////////////////
-	tim2_irq_cycle = get_tim5_ticks () - tick_old + 2;
+	tim2_irq_process_time = get_tim5_ticks () - tick_old + 2;
 }
 
 
@@ -138,10 +140,6 @@ void TIM3_IRQHandler(void)   //TIM3中断
  	static u16 led0pwmval=0;
 	static u16 delay = 0;
 	static u16 tim3_count = 0;
-	
-	int i;
-	
-	
 	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //检查指定的TIM中断发生与否:TIM 中断源 
 	{
 		TIM_ClearITPendingBit(TIM3, TIM_IT_Update  );  //清除TIMx的中断待处理位:TIM 中断源 
@@ -191,18 +189,6 @@ void TIM3_IRQHandler(void)   //TIM3中断
 			}else{
 				GPIOF->ODR = GPIOF->ODR & 0xF000;
 			}
-		}
-		for (i = 0; i < CHANEL_NUM; i++){
-			if (g_counter.ch[i].std_v > STD_UP_V_OFFSET) { 
-				g_counter.ch[i].std_up_v = g_counter.ch[i].std_v - STD_UP_V_OFFSET; 
-			}else{ 
-				g_counter.ch[i].std_up_v = g_counter.ch[i].std_v;
-			} 
-			if (g_counter.ch[i].std_v > STD_DOWN_V_OFFSET) { 
-				g_counter.ch[i].std_down_v = g_counter.ch[i].std_v - STD_DOWN_V_OFFSET; 
-			}else{ 
-				g_counter.ch[i].std_down_v = g_counter.ch[i].std_v;
-			} 
 		}
 /////////////////////////////////////////////////////////////////////////////////		
 	}
@@ -293,7 +279,7 @@ void TIM4_IRQHandler(void)   //TIM4中断
 void TIM5_PWM_Init(u16 arr,u16 psc)
 {  
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-	NVIC_InitTypeDef NVIC_InitStructure;
+//	NVIC_InitTypeDef NVIC_InitStructure;
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);	//使能定时器3时钟
 
@@ -305,42 +291,36 @@ void TIM5_PWM_Init(u16 arr,u16 psc)
 	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
 	
 	
-	TIM_ITConfig(TIM5,TIM_IT_Update,ENABLE ); //使能指定的TIM5中断,允许更新中断
+//	TIM_ITConfig(TIM5,TIM_IT_Update,ENABLE ); //使能指定的TIM5中断,允许更新中断
 
-	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;  //TIM5中断
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = TIM5_INT_PREEM;  //先占优先级0级
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = TIM5_INT_SUB;  //从优先级2级
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
-	NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
+//	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;  //TIM5中断
+//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = TIM5_INT_PREEM;  //先占优先级0级
+//	NVIC_InitStructure.NVIC_IRQChannelSubPriority = TIM5_INT_SUB;  //从优先级2级
+//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
+//	NVIC_Init(&NVIC_InitStructure);  //根据NVIC_InitStruct中指定的参数初始化外设NVIC寄存器
  
 	TIM_Cmd(TIM5, ENABLE);  //使能TIM5
 }
 
 //定时器4中断服务程序
-unsigned long long tim5_ticks = 0;
-unsigned long long tim5_dma_cur_cnt = 0;
-unsigned long long tim5_dma_pre_cnt = 0;
-unsigned long long tim5_adc1_cur_cnt = 0;
-unsigned long long tim5_adc1_pre_cnt = 0;
+//unsigned long long tim5_ticks = 0;
+uint16_t tim5_dma_cur_cnt = 0;
+uint16_t tim5_dma_pre_cnt = 0;
+uint16_t tim5_adc1_cur_cnt = 0;
+uint16_t tim5_adc1_pre_cnt = 0;
 void TIM5_IRQHandler(void)   //TIM5中断
 {
 	if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET) //检查指定的TIM中断发生与否:TIM 中断源 
 	{
 		TIM_ClearITPendingBit(TIM5, TIM_IT_Update  );  //清除TIMx的中断待处理位:TIM 中断源 
-		tim5_ticks++;
+//		tim5_ticks++;
 	}
-}
-
-unsigned long long get_tim5_ticks_old (void)
-{
-	//return (tim5_ticks * 65536 + TIM5->CNT);
-	return ((tim5_ticks << 16) + TIM5->CNT);
 }
 
 void refresh_dma1_cycle (void)
 {
 	//tim5_dma_cur_cnt = tim5_ticks * 65536 + TIM5->CNT
-	tim5_dma_cur_cnt = (tim5_ticks << 16) + TIM5->CNT;
+	tim5_dma_cur_cnt = TIM5->CNT;
 	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
 	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
 	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
@@ -351,7 +331,7 @@ void refresh_dma1_cycle (void)
 void refresh_adc1_cycle (void)
 {
 	//tim5_adc1_cur_cnt = tim5_ticks * 65536 + TIM5->CNT;
-	tim5_adc1_cur_cnt = ((tim5_ticks << 16)) + TIM5->CNT;
+	tim5_adc1_cur_cnt = TIM5->CNT;
 	ADC1_irq_cycle = tim5_adc1_cur_cnt - tim5_adc1_pre_cnt;
 	tim5_adc1_pre_cnt = tim5_adc1_cur_cnt;
 }

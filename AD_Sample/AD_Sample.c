@@ -34,8 +34,8 @@ void counter_init (void)
 	
 	COUNT_COMPLETE = 1;
 	
-	g_counter.AD_Value_p = AD_Value_0;
-	g_counter.buf_index = 0;
+	g_counter.AD_buf_p = AD_Value_0;
+	g_counter.AD_use_buf_index = 0;
 	g_counter.counter_state = COUNTER_IDLE;
 	
 	for (i = 0; i < CHANEL_NUM; i++){
@@ -246,15 +246,15 @@ void ADC1_Configuration(void)
 U16 detect_chanel_index = 0xFFFF;//检测通道索引
 U16 chanel_pos_index = 0;	//通道光敏二极管位置索引	
 U16 ADC_sync_signal = 0; //ADC转换处理同步信号
-U16 ADC1_irq_cycle = 0;
-U16 ADC1_process_time = 0;
+U16 ADC1_irq_cycle = 23;
+U16 ADC1_process_time = 6;
 //ADC中断服务函数
 void ADC1_2_IRQHandler(void)
 {   
 	//U16 temp;
-	unsigned long long tick_old;
-	tick_old = get_tim5_ticks();
-	refresh_adc1_cycle ();
+//	unsigned long long tick_old;
+//	tick_old = get_tim5_ticks();
+//	refresh_adc1_cycle ();
 ///////////////////////////////////////////////////////////////////////////////
 	if (ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET){//电眼故障时进这里
 		detect_chanel_index = CHANEL_NUM - (DMA_GetCurrDataCounter (DMA1_Channel1) % CHANEL_NUM);
@@ -274,7 +274,7 @@ void ADC1_2_IRQHandler(void)
 		ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);      //清除ADCx的中断待处理位
 	}
 ////////////////////////////////////////////////////////////////////
-	ADC1_process_time = get_tim5_ticks () - tick_old + 2;  	
+//	ADC1_process_time = get_tim5_ticks () - tick_old + 2;  	
 }
 
 
@@ -357,49 +357,6 @@ void counter_process (void);
 	}
 #endif
 	
-u16 dma_irq_cycle = 0;
-
-void DMA1_Channel1_IRQHandler(void)
-{     
-	static int process_rdy_old = 0;
-	unsigned long long tick_old;
-	tick_old = get_tim5_ticks();
-	refresh_dma1_cycle (); //先统计DMA中断周期
-/////////////////////////////////////////////////////////////////////////////////
-//	u8 count;
-	if(DMA_GetITStatus(DMA1_IT_TC1)){
-		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
-		if (process_rdy < PROCESS_RDY){
-			GET_STD_AD_V (After_filter, AD_Value_0, 0, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 1, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 2, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 3, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 4, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 5, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 6, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 7, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 8, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 9, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 10, SAMPLE_NUM);
-			GET_STD_AD_V (After_filter, AD_Value_0, 11, SAMPLE_NUM);
-			AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
-			g_counter.buf_index = 0;
-			g_counter.AD_Value_p = AD_Value_0;
-			if ((process_rdy + 1) == PROCESS_RDY){
-				process_rdy++;
-				COUNTER_FINISH_OP ();
-			}else{
-				process_rdy_old = process_rdy;
-			}
-		}else{
-			counter_process ();
-		}
-	} 
-//////////////////////////////////////////////////////////////////////
-	counter_process_time = get_tim5_ticks () - tick_old + 2;  	
-}
-
-
 #if (SAMPLE_NUM == 8) 
 	#define AD_FILTER(AD,BUF,C,S) {\
 		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
@@ -481,7 +438,7 @@ void AD_Start_Sample (u32 _memBaseAddr)
 {
 	/* Write to DMA1 Channel4 CMAR */
 	DMA1_Channel1->CMAR = _memBaseAddr;
-	ADC_sync_signal = 0;//AD 信号清零 采样同步
+	//ADC_sync_signal = 0;//AD 信号清零 采样同步
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
 
@@ -511,7 +468,7 @@ int save_detect_data (U16 _ch, U16 * _index, U16 _ad_value)
 #define CASE_CH(CH) case CH: if (DOOR_##CH == 1){ \
 	if (g_counter.set_door_n_close_delay[CH] == 0){ \
 		DOOR_##CH = 0; \
-	}else if (_ch->door_close_delay == 0){/*如果door_close_delay等于0，说明此刻没有在计时*/ \
+	}else if ((_ch->door_close_delay == 0) && (DOOR_##CH == 1)){/*如果door_close_delay等于0，说明此刻没有在计时*/ \
 		_ch->door_close_delay = g_counter.set_door_n_close_delay[CH];/*小料门关闭延时*/ \
 	} \
 	_ch->close_interval.data_hl = _ch->interval.data_hl; \
@@ -547,7 +504,6 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 		ad_change_v = 0;
 	}
 	switch(_ch->process_step){ 
-/*预制延迟,初始赋值*/
 		case 0: {
 			
 			_ch->wave_down_flag = 0;
@@ -561,7 +517,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			
 			_ch->process_step = 6;
 			_ch->state = CH_IDLE;
-			_ch->interval_ticks = get_tim5_ticks ();
+			_ch->interval_ticks = get_sys_run_time ();
 			_ch->max_interval.data_hl = 0;
 			_ch->max_len.data_hl = 0;
 			_ch->max_close_interval.data_hl = 0;
@@ -595,7 +551,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			if (_ch->wave_down_flag > WAVE_DOWN){//检测到有药粒
 				_ch->wave_down_flag = 0;
 				_ch->ad_value_min_temp = _ad_value_;
-				_ch->size_ticks = get_tim5_ticks ();
+				_ch->size_ticks = get_sys_run_time ();
 				_ch->interval.data_hl = _ch->size_ticks - _ch->interval_ticks;
 				if (_ch->interval.data_hl > _ch->max_interval.data_hl ){
 					if ( _ch->max_interval.data_hl > 0){
@@ -636,7 +592,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							g_counter.ch[10].cur_count = 0;
 							g_counter.ch[11].cur_count = 0;
 						}
-					}else{//达到设定的计数量
+					}else{//已经达到设定的计数量，开始预数
 						_ch->counter_state = PRE_COUNT;
 					}
 				}
@@ -702,7 +658,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			}
 			
 			if (_ch->wave_up_flag > WAVE_UP){
-				_ch->interval_ticks = get_tim5_ticks ();
+				_ch->interval_ticks = get_sys_run_time ();
 				_ch->len.data_hl = _ch->interval_ticks - _ch->size_ticks;
 				if (_ch->len.data_hl > _ch->max_len.data_hl){
 					_ch->max_len.data_hl = _ch->len.data_hl;
@@ -775,73 +731,126 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-u16 counter_process_time = 0;
-void counter_process (void)
-{
-	int r_code = 0;
-//////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// process begin ///////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
-	
-	if (g_counter.buf_index == 0){
-		AD_Start_Sample ((u32) AD_Value_1);//滤波完就开启转换
-		g_counter.AD_Value_p = AD_Value_0;
-		g_counter.buf_index = 1;
-	}else {
-		AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
-		g_counter.AD_Value_p = AD_Value_1;
-		g_counter.buf_index = 0;
-	}
+//void counter_process (void)
+//{
+//}
 
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 0, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 1, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 2, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 3, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 4, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 5, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 6, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 7, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 8, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 9, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 10, SAMPLE_NUM);
-	AD_FILTER (After_filter, g_counter.AD_Value_p, 11, SAMPLE_NUM);
-	
-	r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
-	r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);
-	r_code += count_piece (&g_counter.ch[2], After_filter[2], 2);
-	r_code += count_piece (&g_counter.ch[3], After_filter[3], 3);
-	r_code += count_piece (&g_counter.ch[4], After_filter[4], 4);
-	r_code += count_piece (&g_counter.ch[5], After_filter[5], 5);
-	r_code += count_piece (&g_counter.ch[6], After_filter[6], 6);
-	r_code += count_piece (&g_counter.ch[7], After_filter[7], 7);
-	r_code += count_piece (&g_counter.ch[8], After_filter[8], 8);
-	r_code += count_piece (&g_counter.ch[9], After_filter[9], 9);
-	r_code += count_piece (&g_counter.ch[10], After_filter[10], 10);
-	r_code += count_piece (&g_counter.ch[11], After_filter[11], 11);
-	
-	if (my_env.print == 1){
-		if (r_code != 0){
-		}else if (g_counter.ch[g_counter.set_watch_ch].state == CH_DATA_RDY){
-			if (my_env.dma_state == 0){
-				my_env.dma_state = 1;
-				g_counter.buf_addr = (u32)&Detect_Buf[0];
-				OSQPost(debug_msg, (void *) 0x55);//发送消息
+u16 counter_process_time = 0;
+u16 dma_irq_cycle = 0;
+void DMA1_Channel1_IRQHandler(void)
+{     
+	static int process_rdy_old = 0;
+	uint16_t tick_old;
+	int r_code = 0, i;
+	tick_old = get_tim5_ticks();
+	refresh_dma1_cycle (); //先统计DMA中断周期
+/////////////////////////////////////////////////////////////////////////////////
+//	u8 count;
+//	if(DMA_GetITStatus(DMA1_IT_HT1)){
+//		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
+//		i = DMA1_Channel1->CNDTR;
+//	}else 
+	if(DMA_GetITStatus(DMA1_IT_TC1)){
+		DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
+		if (g_counter.AD_use_buf_index == 0){
+			AD_Start_Sample ((u32) AD_Value_1);//滤波完就开启转换
+			g_counter.AD_use_buf_index = 1;
+			g_counter.AD_buf_p = AD_Value_0;
+		}else {
+			AD_Start_Sample ((u32) AD_Value_0);//滤波完就开启转换
+			g_counter.AD_use_buf_index = 0;
+			g_counter.AD_buf_p = AD_Value_1;
+		}
+		if (process_rdy < PROCESS_RDY){	
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 0, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 1, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 2, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 3, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 4, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 5, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 6, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 7, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 8, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 9, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
+			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
+			if ((process_rdy + 1) == PROCESS_RDY){
+				for (i = 0; i < CHANEL_NUM; i++){
+					if (g_counter.ch[i].std_v > STD_UP_V_OFFSET) { 
+						g_counter.ch[i].std_up_v = g_counter.ch[i].std_v - STD_UP_V_OFFSET; 
+					}else{ 
+						g_counter.ch[i].std_up_v = g_counter.ch[i].std_v;
+					} 
+					if (g_counter.ch[i].std_v > STD_DOWN_V_OFFSET) { 
+						g_counter.ch[i].std_down_v = g_counter.ch[i].std_v - STD_DOWN_V_OFFSET; 
+					}else{ 
+						g_counter.ch[i].std_down_v = g_counter.ch[i].std_v;
+					} 
+				}
+				process_rdy = PROCESS_RDY;
+				COUNTER_FINISH_OP ();
+			}else{
+				process_rdy_old = process_rdy;
 			}
+		}else{
+		//////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////// process begin ///////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////
+
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 0, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 1, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 2, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 3, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 4, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 5, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 6, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 7, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 8, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 9, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
+			AD_FILTER (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
+			
+			//After_filter[0] = g_counter.sim_ad_value;
+			r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
+			r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);
+			r_code += count_piece (&g_counter.ch[2], After_filter[2], 2);
+			r_code += count_piece (&g_counter.ch[3], After_filter[3], 3);
+			r_code += count_piece (&g_counter.ch[4], After_filter[4], 4);
+			r_code += count_piece (&g_counter.ch[5], After_filter[5], 5);
+			r_code += count_piece (&g_counter.ch[6], After_filter[6], 6);
+			r_code += count_piece (&g_counter.ch[7], After_filter[7], 7);
+			r_code += count_piece (&g_counter.ch[8], After_filter[8], 8);
+			r_code += count_piece (&g_counter.ch[9], After_filter[9], 9);
+			r_code += count_piece (&g_counter.ch[10], After_filter[10], 10);
+			r_code += count_piece (&g_counter.ch[11], After_filter[11], 11);
+			
+			if (my_env.print == 1){
+				if (r_code != 0){
+				}else if (g_counter.ch[g_counter.set_watch_ch].state == CH_DATA_RDY){
+					if (my_env.dma_state == 0){
+						my_env.dma_state = 1;
+						g_counter.buf_addr = (u32)&Detect_Buf[0];
+						OSQPost(debug_msg, (void *) 0x55);//发送消息
+					}
+				}
+			}else if ((AD_buff.buffer_en == 1)){
+				AD_buff.buffer[AD_buff.buffer_index] = After_filter[g_counter.set_watch_ch];
+				AD_buff.buffer_index++;
+				if (AD_buff.buffer_index >= AD_BUFF_SIZE){
+					AD_buff.buffer_index = 0;
+					AD_buff.buffer_en = 0;
+					OSQPost(debug_msg, (void *) 0x55);//发送消息
+				}
+			}
+			
+		//	counter_process_state = r_code;
+		//////////////////////////////// process end /////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////
 		}
-	}else if ((AD_buff.buffer_en == 1)){
-		AD_buff.buffer[AD_buff.buffer_index] = After_filter[g_counter.set_watch_ch];
-		AD_buff.buffer_index++;
-		if (AD_buff.buffer_index >= AD_BUFF_SIZE){
-			AD_buff.buffer_index = 0;
-			AD_buff.buffer_en = 0;
-			OSQPost(debug_msg, (void *) 0x55);//发送消息
-		}
-	}
-	
-//	counter_process_state = r_code;
-//////////////////////////////// process end /////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////
+	} 
+//////////////////////////////////////////////////////////////////////
+	counter_process_time = get_tim5_ticks () - tick_old + 2;  	
 }
 
 

@@ -133,7 +133,7 @@ void Modbus_RegMap(void)
 //	}
 	MAP_MODBUS_HOLDREG(12, dma_irq_cycle);
 	MAP_MODBUS_HOLDREG(13, counter_process_time);
-	MAP_MODBUS_HOLDREG(14, tim2_irq_cycle);
+	MAP_MODBUS_HOLDREG(14, tim2_irq_process_time);
 	MAP_MODBUS_HOLDREG(15, ADC1_irq_cycle);
 	MAP_MODBUS_HOLDREG(16, ADC1_process_time);
 	

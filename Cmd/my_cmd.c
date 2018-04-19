@@ -791,9 +791,11 @@ int do_task_manager (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		Rollback ();
 		my_print (" Current Time: %04d-%02d-%2d  ", calendar.w_year, calendar.w_month, calendar.w_date); 
 		my_println ("%02d:%02d:%02d", calendar.hour, calendar.min, calendar.sec);
-		my_print(" tim2_irq_cycle: %06d us\n", tim2_irq_cycle);  
+		my_print(" tim2_irq_process_time: %06d us\n", tim2_irq_process_time);  
 		my_print(" AD_process_time: %06d us\n", counter_process_time); 
 		my_print(" dma_irq_cycle: %06d us\n", dma_irq_cycle);  
+		my_print(" process_rdy: %06d \n", process_rdy);  
+		my_print(" sys_run_time: %06d x100us \n", sys_run_time);  
 		//my_print(" detect_chanel_index: %d \n", detect_chanel_index);  
 		//my_print(" chanel_pos_index: %d \n", chanel_pos_index);   
 		my_print(" #Ticks: %ld  \n",OSTime);  

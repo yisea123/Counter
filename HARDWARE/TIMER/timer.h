@@ -43,7 +43,8 @@
 #define TIM6_INT_CYCLE (((TIM6_ARR + 1) * (TIM6_PSC + 1)) / SYS_CLK) //us
 #define TIM7_INT_CYCLE (((TIM7_ARR + 1) * (TIM7_PSC + 1)) / SYS_CLK) //us
 
-#define get_tim5_ticks() ((tim5_ticks << 16) + TIM5->CNT)
+#define get_tim5_ticks() (TIM5->CNT)/*(tim5_ticks << 16) + */
+#define get_sys_run_time() (sys_run_time)
 
 void TIM2_Int_Init(u16 arr,u16 psc);
 void TIM3_PWM_Init(u16 arr,u16 psc);
@@ -56,10 +57,12 @@ unsigned long long get_tim5_ticks_old (void);
 void refresh_dma1_cycle (void);
 void refresh_adc1_cycle (void);
 
-extern u16 tim2_irq_cycle;
+extern u16 tim2_irq_process_time;
 
 extern unsigned long long tim5_cur_cnt;
 extern unsigned long long tim5_pre_cnt;
 extern unsigned long long tim5_ticks;
+
+extern uint32_t sys_run_time;//100usµÄ¾«¶È
 
 #endif
