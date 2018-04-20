@@ -344,7 +344,7 @@ void io_task (void *pdata)
 		msg = (u32)OSQPend(io_msg,0,&err);
 		delay_ms (10);//滤波
 		OSQQuery (io_msg, &q_data);
-		if (q_data.OSNMsgs != 0){
+		if (q_data.OSNMsgs != 0){//只使用队列中最后一个提交的信息
 			continue;
 		}
 		if (msg == 0x55){//外部IO信号
@@ -412,6 +412,14 @@ void io_task (void *pdata)
 		if (virtual_input[3] == 0){//复位
 			virtual_input[3] = 1;
 			counter_reset ();
+		}
+		if (virtual_input[4] == 0){//小料门手动
+			virtual_input[4] = 1;
+			if ((GPIOF->ODR & 0x0FFF) == 0 || (GPIOF->ODR & 0x0FFF) == 0x0FFF){
+				GPIOF->ODR = GPIOF->ODR ^ 0x0FFF;
+			}else{
+				GPIOF->ODR = GPIOF->ODR & 0xF000;
+			}
 		}
 		if (virtual_input[5] == 0){//模拟一粒
 			g_counter.sim_ad_value = 35000;

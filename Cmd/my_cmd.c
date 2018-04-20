@@ -15,7 +15,6 @@ s_task_parameter task_para;
 void system_env_init (void)
 {
 	int i;
-	i = (unsigned int)do_help;
 	S8 *p = (S8 *) &my_env;
 	for (i = 0; i < sizeof(s_system_env); i++)
 	{

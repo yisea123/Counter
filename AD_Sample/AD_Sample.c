@@ -97,9 +97,9 @@ void counter_reset (void)
 	g_counter.counter_step = 0;
 	g_counter.counter_state = COUNTER_IDLE;
 	COUNT_COMPLETE = 0;
-	OS_EXIT_CRITICAL();
 	g_counter.complete_count = 0;//数粒完成信号
 	g_counter.complete_res = 0;//数粒完成信号
+	OS_EXIT_CRITICAL();
 }
 void counter_data_clear (void)
 {
@@ -267,6 +267,10 @@ void ADC1_Configuration(void)
 void re_calibration_detect (void)
 {
 	int i;
+#if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
+    OS_CPU_SR  cpu_sr = 0u;
+#endif
+	OS_ENTER_CRITICAL();
 	COUNT_COMPLETE = 1;
 	VIBRATE_SWITCH = 1;
 	process_rdy = 0;
@@ -277,6 +281,7 @@ void re_calibration_detect (void)
 		g_counter.ch[i].std_v = 0;
 		g_counter.ch[i].ad_averaged_value = 0;
 	}
+	OS_EXIT_CRITICAL();
 }
 
 
@@ -440,13 +445,16 @@ void start_vibrate (void)
 		g_counter.pre_count = 0;
 		PRE_COUNT_FLAG = 1;
 		g_counter.counter_state = NORMAL_COUNT;
+		VIBRATE_SWITCH = 0;
 	}else{//多数或者刚好数够
 		g_counter.total_count = g_counter.pre_count;
 		g_counter.pre_count = 0;
 		COUNTER_FINISH_OP ();
 		g_counter.counter_state = PRE_COUNT;
+		if (g_counter.pre_count < g_counter.set_pre_count){//达到设定的预数
+			VIBRATE_SWITCH = 0;
+		}
 	}
-	VIBRATE_SWITCH = 0;
 	OS_EXIT_CRITICAL();
 }	
 void stop_vibrate (void)
@@ -604,7 +612,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				///////////////////////////////////////////////////////////////////////////////////////////
 				_ch->cur_count++;
 				if (_ch->counter_state == NORMAL_COUNT){//通道正常数粒状态
-					if ((g_counter.total_count + 1) <= g_counter.set_count){//判断当前这粒是属于哪一瓶
+					if ((g_counter.total_count) < g_counter.set_count){//判断当前这粒是属于哪一瓶
 						g_counter.total_count++;
 						if (g_counter.total_count == g_counter.set_count){
 							g_counter.counter_state = PRE_COUNT;//数粒机进入预数粒状态
@@ -625,26 +633,32 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							g_counter.ch[11].cur_count = 0;
 						}
 					}else{//已经达到设定的计数量，开始预数
+						switch (_ch_id){
+							CASE_CH(0);
+							CASE_CH(1);
+							CASE_CH(2);
+							CASE_CH(3);
+							CASE_CH(4);
+							CASE_CH(5);
+							CASE_CH(6);
+							CASE_CH(7);
+							CASE_CH(8);
+							CASE_CH(9);
+							CASE_CH(10);
+							CASE_CH(11);
+							default:break;
+						}
+						g_counter.pre_count++;
+						if (g_counter.pre_count >= g_counter.set_pre_count){//达到设定的预数
+							pause_vibrate();
+						}
+						if (g_counter.pre_count > g_counter.set_count){//预数超过设定数
+							g_counter.rej_flag_buf.data.h |= REJ_TOO_MORE;
+						}
 						_ch->counter_state = PRE_COUNT;
+						PRE_COUNT_FLAG = 0;
 					}
-				}
-				if (_ch->counter_state == PRE_COUNT){//通道预数粒状态
-					switch (_ch_id){
-						CASE_CH(0);
-						CASE_CH(1);
-						CASE_CH(2);
-						CASE_CH(3);
-						CASE_CH(4);
-						CASE_CH(5);
-						CASE_CH(6);
-						CASE_CH(7);
-						CASE_CH(8);
-						CASE_CH(9);
-						CASE_CH(10);
-						CASE_CH(11);
-						default:break;
-					}
-					PRE_COUNT_FLAG = 0;
+				}else{// if (_ch->counter_state == PRE_COUNT){//通道预数粒状态
 					g_counter.pre_count++;
 					if (g_counter.pre_count >= g_counter.set_pre_count){//达到设定的预数
 						pause_vibrate();
@@ -780,7 +794,7 @@ void DMA1_Channel1_IRQHandler(void)
 	tim5_dma_cur_cnt = get_tim5_ticks();
 	dma_irq_cycle = tim5_dma_cur_cnt - tim5_dma_pre_cnt;
 	tim5_dma_pre_cnt = tim5_dma_cur_cnt;
-	if ((dma_irq_cycle > 400) && (process_rdy >= PROCESS_RDY)){
+	if ((dma_irq_cycle > 2100) && (process_rdy >= PROCESS_RDY)){
 		counter_process_state = 0xE001;
 	}
 /////////////////////////////////////////////////////////////////////////////////

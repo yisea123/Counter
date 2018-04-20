@@ -60,7 +60,19 @@ u16 tim2_irq_process_time = 0;
 uint32_t sys_run_time	= 0;//100us的精度
 void TIM2_IRQHandler(void)   //TIM2中断
 {
+//	uint32_t temp;
 	unsigned long long tick_old;
+//	if (sys_run_time > 0){
+//		sys_run_time--;
+//	}
+//	if (g_counter.complete_count > 0){
+//		g_counter.complete_count--;
+//	}
+//		temp = sys_run_time;
+//	while (!temp)
+//	{
+//		temp = sys_run_time;
+//	}
 	tick_old = get_tim5_ticks();
 ///////////////////////////////////////////////////////////////////////////////////////////
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) //检查指定的TIM中断发生与否:TIM 中断源 
@@ -181,14 +193,6 @@ void TIM3_IRQHandler(void)   //TIM3中断
 //				TIM_Cmd(TIM6, ENABLE);  //使能TIMx外设		
 //			}
 		////////////////////////////////////////////////////////////////////////
-		}
-		if (virtual_input[4] == 0){//小料门手动
-			virtual_input[4] = 1;
-			if ((GPIOF->ODR & 0x0FFF) == 0 || (GPIOF->ODR & 0x0FFF) == 0x0FFF){
-				GPIOF->ODR = GPIOF->ODR ^ 0x0FFF;
-			}else{
-				GPIOF->ODR = GPIOF->ODR & 0xF000;
-			}
 		}
 /////////////////////////////////////////////////////////////////////////////////		
 	}
