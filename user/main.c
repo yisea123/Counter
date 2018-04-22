@@ -329,9 +329,6 @@ void cmd_task(void *pdata)
 
 void io_task (void *pdata)
 {
-#if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
-    OS_CPU_SR  cpu_sr = 0u;
-#endif
 	u8 err;	
 	u32 msg;
 	OS_Q_DATA q_data;
@@ -373,9 +370,6 @@ void io_task (void *pdata)
 								g_counter.total_good++;
 							}
 						}
-						OS_ENTER_CRITICAL(); //进入临界区(关闭中断) 
-						g_counter.rej_flag_buf.data_hl >>= 16;
-						OS_EXIT_CRITICAL(); //退出临界区(开中断) 
 						COUNT_COMPLETE = 1;//应答
 						g_counter.counter_step = 15;
 					}

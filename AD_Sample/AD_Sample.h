@@ -70,7 +70,7 @@
 	
 #define OPEN_DOOR(CH) { \
 	g_counter.ch[CH].door_close_delay = 0; \
-	g_counter.ch[CH].cur_count = 0; \
+	/*g_counter.ch[CH].cur_count = 0;*/ \
 	g_counter.ch[CH].counter_state = NORMAL_COUNT; \
 	DOOR_##CH = 1; \
 }	
@@ -181,7 +181,7 @@ typedef struct
 	U32 ad_averaged_value;
 	U16 ad_fitter_buff[AD_FITTER_BUFF_SIZE];
 	U16 ad_fitter_index;
-	s_32 area_sum_buf;//截面积
+	uint32_t area_sum_buf;//截面积
 	s_32 area_sum;//截面积
 	s_32 min_area_sum;
 	s_32 max_area_sum;
@@ -194,8 +194,8 @@ typedef struct
 	s_32 max_close_interval;
 	s_32 min_interval;
 	s_32 max_interval;
-	long long interval_ticks;
-	long long size_ticks;
+	uint32_t interval_ticks;
+	uint32_t length_ticks;
 }s_chanel_info;
 
 typedef struct

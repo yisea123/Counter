@@ -440,11 +440,12 @@ void start_vibrate (void)
 	OPEN_DOOR(9);
 	OPEN_DOOR(10);
 	OPEN_DOOR(11);
+	g_counter.rej_flag_buf.data_hl >>= 16;
 	if (g_counter.pre_count < g_counter.set_count){
 		g_counter.total_count = g_counter.pre_count;
 		g_counter.pre_count = 0;
-		PRE_COUNT_FLAG = 1;
 		g_counter.counter_state = NORMAL_COUNT;
+		PRE_COUNT_FLAG = 1;
 		VIBRATE_SWITCH = 0;
 	}else{//多数或者刚好数够
 		g_counter.total_count = g_counter.pre_count;
@@ -575,7 +576,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				r_code = save_detect_data (_ch_id, &_ch->sample_index, _ad_value_);
 				_ch->state = CH_BUSY;
 				_ch->wave_down_flag++;
-				_ch->area_sum_buf.data_hl += ad_change_v;
+				_ch->area_sum_buf += ad_change_v;
 				
 				if (_ad_value_ < _ch->ad_value_min_temp){
 					_ch->ad_value_min_temp = _ad_value_;
@@ -585,28 +586,12 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				_ch->sample_index = 0;
 				_ch->state = CH_IDLE;
 				_ch->ad_value_min_temp = 0xFFFF;
-				_ch->area_sum_buf.data_hl = 0;
+				_ch->ad_value_min = 0xFFFF;
+				_ch->area_sum_buf = 0;
 			}
 			
 			if (_ch->wave_down_flag > WAVE_DOWN){//检测到有药粒
-				_ch->wave_down_flag = 0;
-				_ch->ad_value_min_temp = _ad_value_;
-				_ch->size_ticks = get_sys_run_time ();
-				_ch->interval.data_hl = _ch->size_ticks - _ch->interval_ticks;
-				if (_ch->interval.data_hl > _ch->max_interval.data_hl ){
-					if ( _ch->max_interval.data_hl > 0){
-						_ch->max_interval.data_hl = _ch->interval.data_hl;
-					}else{
-						_ch->max_interval.data_hl = 1;//通道第一粒出现
-					}
-				}
-				if (_ch->interval.data_hl < _ch->min_interval.data_hl){
-					_ch->min_interval.data_hl = _ch->interval.data_hl;
-					if (_ch->min_interval.data_hl < g_counter.min_interval.data_hl){
-						g_counter.min_interval.data_hl = _ch->min_interval.data_hl;
-					}
-				}
-				_ch->process_step = 16;
+				_ch->length_ticks = get_sys_run_time ();
 				///////////////////////////////////////////////////////////////////////////////////////////
 				//计数
 				///////////////////////////////////////////////////////////////////////////////////////////
@@ -614,7 +599,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				if (_ch->counter_state == NORMAL_COUNT){//通道正常数粒状态
 					if ((g_counter.total_count) < g_counter.set_count){//判断当前这粒是属于哪一瓶
 						g_counter.total_count++;
-						if (g_counter.total_count == g_counter.set_count){
+						if (g_counter.total_count == g_counter.set_count){//当前这一瓶的最后一粒
 							g_counter.counter_state = PRE_COUNT;//数粒机进入预数粒状态
 							if (g_counter.pre_count >= g_counter.set_pre_count){
 								pause_vibrate();
@@ -667,6 +652,23 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 						g_counter.rej_flag_buf.data.h |= REJ_TOO_MORE;
 					}
 				}
+				_ch->wave_down_flag = 0;
+				_ch->ad_value_min_temp = _ad_value_;
+				_ch->interval.data_hl = _ch->length_ticks - _ch->interval_ticks;
+				if (_ch->interval.data_hl > _ch->max_interval.data_hl ){
+					if ( _ch->max_interval.data_hl > 0){
+						_ch->max_interval.data_hl = _ch->interval.data_hl;
+					}else{
+						_ch->max_interval.data_hl = 1;//通道第一粒出现
+					}
+				}
+				if (_ch->interval.data_hl < _ch->min_interval.data_hl){
+					_ch->min_interval.data_hl = _ch->interval.data_hl;
+					if (_ch->min_interval.data_hl < g_counter.min_interval.data_hl){
+						g_counter.min_interval.data_hl = _ch->min_interval.data_hl;
+					}
+				}
+				_ch->process_step = 16;
 				///////////////////////////////////////////////////////////////////////////////////////////
 			}
 			break;
@@ -675,7 +677,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			
 			r_code = save_detect_data (_ch_id, &_ch->sample_index, _ad_value_);
 			
-			_ch->area_sum_buf.data_hl += ad_change_v;
+			_ch->area_sum_buf += ad_change_v;
 			
 			if (_ad_value_ < _ch->ad_value_min_temp){
 				_ch->ad_value_min_temp = _ad_value_;
@@ -705,7 +707,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			
 			if (_ch->wave_up_flag > WAVE_UP){
 				_ch->interval_ticks = get_sys_run_time ();
-				_ch->len.data_hl = _ch->interval_ticks - _ch->size_ticks;
+				_ch->len.data_hl = _ch->interval_ticks - _ch->length_ticks;
 				if (_ch->len.data_hl > _ch->max_len.data_hl){
 					_ch->max_len.data_hl = _ch->len.data_hl;
 					if (_ch->max_len.data_hl > g_counter.max_len.data_hl){
@@ -719,8 +721,9 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 					}
 				}
 				
-				_ch->area_sum.data_hl = _ch->area_sum_buf.data_hl + ad_change_v;//最终面积
-				_ch->area_sum_buf.data_hl = 0;
+				_ch->area_sum.data_hl = ((g_counter.ch[_ch_id].std_v - _ch->ad_value_min) *_ch->len.data_hl) >> 1;
+				//_ch->area_sum.data_hl = _ch->area_sum_buf + ad_change_v;//最终面积
+				_ch->area_sum_buf = 0;
 				if (_ch->area_sum.data_hl > _ch->max_area_sum.data_hl){
 					_ch->max_area_sum.data_hl = _ch->area_sum.data_hl;
 					if (_ch->max_area_sum.data_hl > g_counter.max_area_sum.data_hl){
@@ -746,7 +749,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 					}else if (_ch->area_sum.data_hl < g_counter.set_min_area_sum.data_hl){//低于设定面积
 						g_counter.rej_flag_buf.data.l |= REJ_TOO_SMALL;
 					}
-					if (g_counter.total_count >= g_counter.set_count){//达到设定的计数量
+					if (g_counter.total_count == g_counter.set_count){//当前这一瓶的最后一粒
 						COUNTER_FINISH_OP ();//数粒完成,给相应的操作
 					}
 				}else if (_ch->counter_state == PRE_COUNT){//预数粒
