@@ -35,6 +35,7 @@ void modbus_analyze(u8 * data_buf);
 void modbus_init(void);
 int save_para (int flag);
 int load_para (void);
+void check_data (void);
 extern vu32 virtual_input[MODBUS_VIRTUAL_INPUT_NUM];
 
 extern u8 RS485_tx_buf[256];//·¢ËÍ»º³åÇø

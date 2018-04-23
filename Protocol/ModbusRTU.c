@@ -268,9 +268,6 @@ void Modbus_RegMap(void)
 	
 	save_para (0); //save_para(1) 保存参数save_para(0) 读取参数
 	Modbus_HoldReg_NULL = 0;
-	if (g_counter.set_std_up_v_offset < 1){
-		g_counter.set_std_up_v_offset = 1;
-	}
 	g_counter.set_watch_ch = CHANEL_NUM;
 }
 
@@ -337,18 +334,6 @@ int save_para (int flag)
 			*Modbus_HoldReg[MODBUS_SAVE_DATA_START_EX + i] = spi_flash_info->SAVE_DATA_EX[i];
 		}
 	#endif
-		if ((g_counter.set_std_down_v_offset < 1) || (g_counter.set_std_down_v_offset > 100)){
-			g_counter.set_std_down_v_offset = 5;
-		}
-		if ((g_counter.set_wave_down_flag < 1) || (g_counter.set_wave_down_flag > 1000)){
-			g_counter.set_wave_down_flag = 8;
-		}
-		if ((g_counter.set_wave_up_flag < 1) || (g_counter.set_wave_up_flag > 1000)){
-			g_counter.set_wave_up_flag = 8;
-		}
-		if ((g_counter.set_wave_up_value < 1) || (g_counter.set_wave_up_value > 1000)){
-			g_counter.set_wave_up_value = 16;
-		}
 	}
 	if (flag == -1){
 		my_env.is_registered = NOT_REGISTERED;
@@ -361,6 +346,35 @@ int save_para (int flag)
 	if (spi_flash_info != NULL)
 		free (spi_flash_info);
 	return 0;
+}
+
+void check_data (void)
+{
+	int i;
+	if ((g_counter.set_std_down_v_offset < 1) || (g_counter.set_std_down_v_offset > 100)){
+		g_counter.set_std_down_v_offset = 5;
+	}
+	if ((g_counter.set_wave_down_flag < 1) || (g_counter.set_wave_down_flag > 1000)){
+		g_counter.set_wave_down_flag = 8;
+	}
+	if ((g_counter.set_wave_up_flag < 1) || (g_counter.set_wave_up_flag > 1000)){
+		g_counter.set_wave_up_flag = 8;
+	}
+	if ((g_counter.set_wave_up_value < 1) || (g_counter.set_wave_up_value > 1000)){
+		g_counter.set_wave_up_value = 16;
+	}
+	if (g_counter.set_std_up_v_offset < 1){
+		g_counter.set_std_up_v_offset = 1;
+	}
+	if (g_counter.set_door_close_delay < 1){
+		g_counter.set_door_close_delay = 1;
+	}
+	for (i = 0; i < CHANEL_NUM; i++){
+		if (g_counter.set_door_n_close_delay[i] < 1){
+			g_counter.set_door_n_close_delay[i] = 1;
+		}
+	}
+	DATA_RANGE_CHECK ();
 }
 
 void modbus_init(void)
@@ -383,8 +397,7 @@ void modbus_init(void)
 	RS485_TX_EN=0;//开启接收模式  
 	
 	Modbus_RegMap ();
-	
-	DATA_RANGE_CHECK ();
+	check_data ();
 }
 void Modbus_01_Handle(u8 * _data_buf);
 void Modbus_02_Handle(u8 * _data_buf);

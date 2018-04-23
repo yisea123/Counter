@@ -607,21 +607,26 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							}
 						}
 					}else{//已经达到设定的计数量，开始预数
-						switch (_ch_id){
-							CASE_CH(0);
-							CASE_CH(1);
-							CASE_CH(2);
-							CASE_CH(3);
-							CASE_CH(4);
-							CASE_CH(5);
-							CASE_CH(6);
-							CASE_CH(7);
-							CASE_CH(8);
-							CASE_CH(9);
-							CASE_CH(10);
-							CASE_CH(11);
-							default:break;
-						}
+						_ch->door_close_delay = g_counter.set_door_n_close_delay[_ch_id];/*小料门关闭延时*/ 
+						_ch->close_interval.data_hl = _ch->interval.data_hl; 
+						if (_ch->close_interval.data_hl < g_counter.set_min_interval.data_hl){/*小料门关闭时药粒间隔太小*/  
+							REJECT_FLAG = 0; 
+							g_counter.rej_flag_buf.data.h |= REJ_TOO_CLOSE; 
+							g_counter.rej_flag_buf.data.l |= REJ_TOO_CLOSE; 
+							g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/ 
+						} 
+						if (_ch->close_interval.data_hl > _ch->max_close_interval.data_hl){ 
+							_ch->max_close_interval.data_hl = _ch->close_interval.data_hl; 
+							if (_ch->max_close_interval.data_hl > g_counter.max_close_interval.data_hl){ 
+								g_counter.max_close_interval.data_hl = _ch->max_close_interval.data_hl; 
+							} 
+						} 
+						if (_ch->close_interval.data_hl < _ch->min_close_interval.data_hl){ 
+							_ch->min_close_interval.data_hl = _ch->close_interval.data_hl; 
+							if (_ch->min_close_interval.data_hl < g_counter.min_close_interval.data_hl){ 
+								g_counter.min_close_interval.data_hl = _ch->min_close_interval.data_hl; 
+							} 
+						} 
 						_ch->cur_count = 1;
 						g_counter.pre_count++;
 						if (g_counter.pre_count >= g_counter.set_pre_count){//达到设定的预数

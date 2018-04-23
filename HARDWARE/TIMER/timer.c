@@ -188,6 +188,7 @@ void TIM3_IRQHandler(void)   //TIM3中断
 			if (process_rdy < PROCESS_RDY){
 				process_rdy++;
 			}
+			check_data ();
 			tim3_count = 0;
 //			if (!VIBRATE_SWITCH){
 //				TIM_Cmd(TIM6, ENABLE);  //使能TIMx外设		
