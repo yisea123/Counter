@@ -91,6 +91,12 @@ void TIM2_IRQHandler(void)   //TIM2ÖÐ¶Ï
 		CHECK_DOOR_CLOSE_FLAG (9);
 		CHECK_DOOR_CLOSE_FLAG (10);
 		CHECK_DOOR_CLOSE_FLAG (11);
+		if (g_counter.counter_fin_signal_delay > 0){
+			g_counter.counter_fin_signal_delay--;
+			if (g_counter.counter_fin_signal_delay == 0){
+				COUNTER_FINISH_OP ();
+			}
+		}
 	}
 ///////////////////////////////////////////////////////////////////////////////////////////
 	tim2_irq_process_time = get_tim5_ticks () - tick_old + 2;

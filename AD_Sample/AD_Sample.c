@@ -602,6 +602,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 						g_counter.total_count++;
 						if (g_counter.total_count == g_counter.set_count){//当前这一瓶的最后一粒
 							g_counter.counter_state = PRE_COUNT;//数粒机进入预数粒状态
+							g_counter.last_piece_chanel_id = _ch_id;
 							if (g_counter.pre_count >= g_counter.set_pre_count){
 								pause_vibrate();
 							}
@@ -613,7 +614,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							REJECT_FLAG = 0; 
 							g_counter.rej_flag_buf.data.h |= REJ_TOO_CLOSE; 
 							g_counter.rej_flag_buf.data.l |= REJ_TOO_CLOSE; 
-							g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/ 
+							//g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/ 
 						} 
 						if (_ch->close_interval.data_hl > _ch->max_close_interval.data_hl){ 
 							_ch->max_close_interval.data_hl = _ch->close_interval.data_hl; 
@@ -743,8 +744,8 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 					}else if (_ch->area_sum.data_hl < g_counter.set_min_area_sum.data_hl){//低于设定面积
 						g_counter.rej_flag_buf.data.l |= REJ_TOO_SMALL;
 					}
-					if (g_counter.total_count == g_counter.set_count){//当前这一瓶的最后一粒
-						COUNTER_FINISH_OP ();//数粒完成,给相应的操作
+					if (g_counter.last_piece_chanel_id == _ch_id){//当前这一瓶的最后一粒出了电眼
+						SEND_COUNTER_FIN_SIGNAL ();//数粒完成,发送数粒完成信号
 					}
 				}else if (_ch->counter_state == PRE_COUNT){//预数粒
 					if (_ch->len.data_hl > g_counter.set_max_len.data_hl){ //超过设定长度

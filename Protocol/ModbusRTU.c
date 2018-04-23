@@ -136,6 +136,7 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(14, tim2_irq_process_time);
 	MAP_MODBUS_HOLDREG(15, ADC1_irq_cycle);
 	MAP_MODBUS_HOLDREG(16, ADC1_process_time);
+	MAP_MODBUS_HOLDREG(17, g_counter.last_piece_chanel_id);
 	
 	MAP_MODBUS_HOLDREG(20, chanel_pos_index);
 	MAP_MODBUS_HOLDREG(21, Modbus_com_error);
@@ -368,6 +369,9 @@ void check_data (void)
 	}
 	if (g_counter.set_door_close_delay < 1){
 		g_counter.set_door_close_delay = 1;
+	}
+	if (g_counter.set_min_interval.data_hl < 5){
+		g_counter.set_min_interval.data_hl = 5;
 	}
 	for (i = 0; i < CHANEL_NUM; i++){
 		if (g_counter.set_door_n_close_delay[i] < 1){

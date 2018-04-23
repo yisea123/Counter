@@ -71,6 +71,7 @@
 #define OPEN_DOOR(CH) { \
 	g_counter.ch[CH].door_close_delay = 0; \
 	/*g_counter.ch[CH].cur_count = 0;*/ \
+	g_counter.last_piece_chanel_id = 0xFFFF; \
 	g_counter.ch[CH].counter_state = NORMAL_COUNT; \
 	DOOR_##CH = 1; \
 }	
@@ -100,6 +101,10 @@
 	g_counter.ch[CH].min_close_interval.data_hl = 0xFFFFFFFF; \
 	g_counter.ch[CH].min_area_sum.data_hl = 0xFFFFFFFF; \
 	g_counter.ch[CH].ad_min = 0xFFFF; \
+}
+
+#define SEND_COUNTER_FIN_SIGNAL() { \
+	g_counter.counter_fin_signal_delay = g_counter.set_min_interval.data_hl+20; \
 }
 
 #define COUNTER_FINISH_OP() { \
@@ -222,7 +227,8 @@ typedef struct
 	U16 set_wave_down_flag;
 	U16 set_wave_up_flag;
 	U16 set_wave_up_value;
-	U16 rej_next;
+	U16 counter_fin_signal_delay;
+	U16 last_piece_chanel_id;//最后一粒所在的通道号
 	U16 rej_flag;
 	s_32 rej_flag_buf;
 	s_32 area_sum;//截面积
