@@ -592,6 +592,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			
 			if (_ch->wave_down_flag > WAVE_DOWN){//检测到有药粒
 				_ch->length_ticks = get_sys_run_time ();
+				_ch->interval.data_hl = _ch->length_ticks - _ch->interval_ticks;
 				///////////////////////////////////////////////////////////////////////////////////////////
 				//计数
 				///////////////////////////////////////////////////////////////////////////////////////////
@@ -604,18 +605,6 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							if (g_counter.pre_count >= g_counter.set_pre_count){
 								pause_vibrate();
 							}
-							g_counter.ch[0].cur_count = 0;
-							g_counter.ch[1].cur_count = 0;
-							g_counter.ch[2].cur_count = 0;
-							g_counter.ch[3].cur_count = 0;
-							g_counter.ch[4].cur_count = 0;
-							g_counter.ch[5].cur_count = 0;
-							g_counter.ch[6].cur_count = 0;
-							g_counter.ch[7].cur_count = 0;
-							g_counter.ch[8].cur_count = 0;
-							g_counter.ch[9].cur_count = 0;
-							g_counter.ch[10].cur_count = 0;
-							g_counter.ch[11].cur_count = 0;
 						}
 					}else{//已经达到设定的计数量，开始预数
 						switch (_ch_id){
@@ -633,6 +622,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							CASE_CH(11);
 							default:break;
 						}
+						_ch->cur_count = 1;
 						g_counter.pre_count++;
 						if (g_counter.pre_count >= g_counter.set_pre_count){//达到设定的预数
 							pause_vibrate();
@@ -654,7 +644,6 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				}
 				_ch->wave_down_flag = 0;
 				_ch->ad_value_min_temp = _ad_value_;
-				_ch->interval.data_hl = _ch->length_ticks - _ch->interval_ticks;
 				if (_ch->interval.data_hl > _ch->max_interval.data_hl ){
 					if ( _ch->max_interval.data_hl > 0){
 						_ch->max_interval.data_hl = _ch->interval.data_hl;
@@ -721,7 +710,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 					}
 				}
 				
-				_ch->area_sum.data_hl = ((g_counter.ch[_ch_id].std_v - _ch->ad_value_min) *_ch->len.data_hl) >> 1;
+				_ch->area_sum.data_hl = ((g_counter.ch[_ch_id].std_v - _ch->ad_value_min) *_ch->len.data_hl) / 20;
 				//_ch->area_sum.data_hl = _ch->area_sum_buf + ad_change_v;//最终面积
 				_ch->area_sum_buf = 0;
 				if (_ch->area_sum.data_hl > _ch->max_area_sum.data_hl){
