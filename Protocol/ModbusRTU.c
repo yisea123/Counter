@@ -44,7 +44,7 @@ u8 auchCRCLo[] =
 0x48, 0x49, 0x89, 0x4B, 0x8B, 0x8A, 0x4A, 0x4E, 0x8E, 0x8F, 0x4F, 0x8D, 0x4D, 0x4C, 0x8C,
 0x44, 0x84, 0x85, 0x45, 0x87, 0x47, 0x46, 0x86, 0x82, 0x42, 0x43, 0x83, 0x41, 0x81, 0x80,
 0x40
-}; 
+};
 
 u16 CRC16(u8 * _data_buf,u16 len)
 {
@@ -57,7 +57,7 @@ u16 CRC16(u8 * _data_buf,u16 len)
 		uchCRCLo = auchCRCLo[uindex];
 	}
 	return (uchCRCHi<<8|uchCRCLo);
-} 
+}
 
 
 
@@ -82,7 +82,7 @@ U16 Modbus_HoldReg_NULL = 0xFFFF;
 U16 Modbus_com_error = 0;
 U16 data_change_flag = 0;
 
-void Modbus_RegMap(void) 
+void Modbus_RegMap(void)
 {
 	int i;
 	//输入开关量寄存器指针指向
@@ -95,7 +95,7 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_INPUT (6, G, 2);
 	MAP_MODBUS_INPUT (7, G, 3);
 //	Modbus_InputIO[0]=(vu32*)&PCin(6);//KEY0
-      
+
 	//输出开关量寄存器指针指向
 	MAP_MODBUS_OUTPUT (0, F, 0);
 	MAP_MODBUS_OUTPUT (1, F, 1);
@@ -122,11 +122,11 @@ void Modbus_RegMap(void)
 		virtual_input[i] = 1;
 		Modbus_OutputIO[20 + i] = &virtual_input[i];
 	}
-       
+
 	//初始化保持寄存器指针指向///////////////////////////////////
 	for (i = 0; i < MODBUS_REG_NUM; i++){
 		Modbus_HoldReg[i] = &Modbus_HoldReg_NULL;
-	}	
+	}
 //	MAP_MODBUS_HOLDREG(0, OSCPUUsage);
 //	for (i = 0; i < 12; i++){
 //		MAP_MODBUS_HOLDREG(0 + i, g_counter.ch[i].cur_count);
@@ -137,7 +137,7 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(15, ADC1_irq_cycle);
 	MAP_MODBUS_HOLDREG(16, ADC1_process_time);
 	MAP_MODBUS_HOLDREG(17, g_counter.last_piece_chanel_id);
-	
+
 	MAP_MODBUS_HOLDREG(20, chanel_pos_index);
 	MAP_MODBUS_HOLDREG(21, Modbus_com_error);
 	MAP_MODBUS_HOLDREG(22, g_counter.total_count);
@@ -148,7 +148,7 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(27, g_counter.rej_flag);
 	MAP_MODBUS_HOLDREG(28, g_counter.total_good);
 	MAP_MODBUS_HOLDREG(29, Modbus_HoldReg_CPU_Usage);
-	
+
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 0, 	g_counter.set_count);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 1, 	g_counter.set_pre_count);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 2, 	g_counter.set_door_close_delay);
@@ -167,14 +167,14 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 15, g_counter.set_wave_up_flag);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 16, g_counter.set_wave_up_value);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 17, g_counter.set_watch_ch);
-	
-	
-	
+
+
+
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 20, g_counter.set_max_area_sum.data.h);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 21, g_counter.set_max_area_sum.data.l);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 22, g_counter.set_min_area_sum.data.h);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 23, g_counter.set_min_area_sum.data.l);
-	
+
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(64 + i, g_counter.ch[i].ad_min);
 	}
@@ -187,7 +187,7 @@ void Modbus_RegMap(void)
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(100 + i, After_filter[i]);
 	}
-	
+
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(112 + i, g_counter.ch[i].cur_count);
 	}
@@ -197,7 +197,7 @@ void Modbus_RegMap(void)
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(140 + i, g_counter.ch[i].std_up_offset);
 	}
-	
+
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(152 + i * 2, g_counter.ch[i].max_interval.data.h);
 		MAP_MODBUS_HOLDREG(153 + i * 2, g_counter.ch[i].max_interval.data.l);
@@ -246,8 +246,8 @@ void Modbus_RegMap(void)
 		MAP_MODBUS_HOLDREG(416 + i * 2, g_counter.ch[i].min_area_sum.data.h);
 		MAP_MODBUS_HOLDREG(417 + i * 2, g_counter.ch[i].min_area_sum.data.l);
 	}
-	
-	
+
+
 	MAP_MODBUS_HOLDREG(495, g_counter.max_area_sum.data.h);
 	MAP_MODBUS_HOLDREG(496, g_counter.max_area_sum.data.l);
 	MAP_MODBUS_HOLDREG(497, g_counter.min_area_sum.data.h);
@@ -262,11 +262,11 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(506, g_counter.min_len.data.l);
 	MAP_MODBUS_HOLDREG(507, g_counter.min_interval.data.h);
 	MAP_MODBUS_HOLDREG(508, g_counter.min_interval.data.l);
-	
+
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(512 + i, g_counter.set_door_n_close_delay[i]);
 	}
-	
+
 	save_para (0); //save_para(1) 保存参数save_para(0) 读取参数
 	Modbus_HoldReg_NULL = 0;
 	g_counter.set_watch_ch = CHANEL_NUM;
@@ -292,7 +292,7 @@ int save_para (int flag)
 	char id[32];
 	char hash[16];
 	s_spi_file *spi_flash_info = NULL;
-	
+
 	if (flag == 1){
 		if (data_change_flag == 0)
 			return 0;
@@ -343,7 +343,7 @@ int save_para (int flag)
 		my_env.is_registered = REGISTERED;
 		my_println("^_^");//已注册
 	}
-		
+
 	if (spi_flash_info != NULL)
 		free (spi_flash_info);
 	return 0;
@@ -386,20 +386,20 @@ void modbus_init(void)
 	/*定义一个GPIO_InitTypeDef类型的结构体*/
 	GPIO_InitTypeDef GPIO_InitStructure;
 	/*开启GPIOB和GPIOF的外设时钟*/
-	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOG, ENABLE); 
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOG, ENABLE);
 	/*设置引脚模式为通用推挽输出*/
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;   
-	/*设置引脚速率为50MHz */   
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
-	/*选择要控制的GPIOB引脚*/															   
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	/*设置引脚速率为50MHz */
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	/*选择要控制的GPIOB引脚*/
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
 	/*调用库函数，初始化GPIOG*/
-	GPIO_Init(GPIOG, &GPIO_InitStructure);			
+	GPIO_Init(GPIOG, &GPIO_InitStructure);
 	/* 关闭所有led灯	*/
 	GPIO_SetBits(GPIOG, GPIO_Pin_8);
-	
-	RS485_TX_EN=0;//开启接收模式  
-	
+
+	RS485_TX_EN=0;//开启接收模式
+
 	Modbus_RegMap ();
 	check_data ();
 }
@@ -439,10 +439,10 @@ void modbus_analyze(u8 * _data_buf)
 		if(startRegAddr < 1000){//寄存器地址在范围内
 		#if (MODBUS_RTU_USE_UART == 1)
 			crc = cmd_analyze.rec_buf[rec_count - 2] << 8 | cmd_analyze.rec_buf[rec_count - 1];
-			if (crc == CRC16 (cmd_analyze.rec_buf, rec_count - 2)){//CRC校验正确   
+			if (crc == CRC16 (cmd_analyze.rec_buf, rec_count - 2)){//CRC校验正确
 		#elif (MODBUS_RTU_USE_UART == 3)
 			crc = uart3_rec_buf[uart3_rec_count - 2] << 8 | uart3_rec_buf[uart3_rec_count - 1];
-			if (crc == CRC16 (uart3_rec_buf, uart3_rec_count - 2)){//CRC校验正确   
+			if (crc == CRC16 (uart3_rec_buf, uart3_rec_count - 2)){//CRC校验正确
 		#endif
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				switch(_data_buf[1])//根据不同的功能码进行处理
@@ -463,7 +463,7 @@ void modbus_analyze(u8 * _data_buf)
 						Modbus_05_Handle(_data_buf);
 						OSQPost(io_msg, (void *) 0xaa);//发送消息
 						break;
-					}       
+					}
 					case 06: {//写单个寄存器
 						Modbus_06_Handle(_data_buf);
 						break;
@@ -472,11 +472,11 @@ void modbus_analyze(u8 * _data_buf)
 						Modbus_15_Handle(_data_buf);
 						OSQPost(io_msg, (void *) 0xaa);//发送消息
 						break;
-					}    
+					}
 					case 16:{ //写多个寄存器
 						Modbus_16_Handle(_data_buf);
 						break;
-					}		                               
+					}
 				}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			}
@@ -486,7 +486,7 @@ void modbus_analyze(u8 * _data_buf)
 				RS485_tx_buf[1]=_data_buf[1]| 0x80;
 				RS485_tx_buf[2]=0x04; //异常码
 				RS485_SendData(RS485_tx_buf,3);
-			}       
+			}
 		}
 		else//寄存器地址超出范围
 		{
@@ -494,7 +494,7 @@ void modbus_analyze(u8 * _data_buf)
 			RS485_tx_buf[1]=_data_buf[1]|0x80;
 			RS485_tx_buf[2]=0x02; //异常码
 			RS485_SendData(RS485_tx_buf,3);
-		}                                               
+		}
 	}
 	else//功能码错误
 	{
@@ -515,7 +515,7 @@ void Modbus_01_Handle(u8 * _data_buf)
 	u16 calCRC;
 	u16 RegNum;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	RegNum= (((u16)_data_buf[4])<<8)|_data_buf[5];//获取寄存器数量
 	if((startRegAddr+RegNum - 1)<MODBUS_OUTPUT_NUM)//寄存器地址+数量在范围内
@@ -559,7 +559,7 @@ void Modbus_02_Handle(u8 * _data_buf)
 	u16 calCRC;
 	u16 RegNum;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	RegNum= (((u16)_data_buf[4])<<8)|_data_buf[5];//获取寄存器数量
 	if((startRegAddr+RegNum - 1)<MODBUS_INPUT_NUM)//寄存器地址+数量在范围内
@@ -602,7 +602,7 @@ void Modbus_03_Handle(u8 * _data_buf)
 	u16 calCRC;
 	u16 RegNum;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	RegNum= (((u16)_data_buf[4])<<8)|_data_buf[5];//获取寄存器数量
 	if((startRegAddr+RegNum - 1)<MODBUS_REG_NUM)//寄存器地址+数量在范围内
@@ -616,7 +616,7 @@ void Modbus_03_Handle(u8 * _data_buf)
 			RS485_tx_buf[4+i*2] = *Modbus_HoldReg[startRegAddr+i] & 0xFF;//后发送低字节
 		}
 		calCRC=CRC16(RS485_tx_buf,RegNum*2+3);
-		
+
         RS485_tx_buf[RegNum*2+3]=(calCRC>>8)&0xFF;
         RS485_tx_buf[RegNum*2+4]=calCRC&0xFF;
 		RS485_SendData(RS485_tx_buf,RegNum*2+5);
@@ -638,20 +638,20 @@ void Modbus_05_Handle(u8 * _data_buf)
 {
 	u16 calCRC;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	if(startRegAddr < MODBUS_OUTPUT_NUM)//寄存器地址在范围内
 	{
 		if((_data_buf[4]==0xFF)||(_data_buf[5]==0xFF)) *Modbus_OutputIO[startRegAddr]=0x01;
 		else *Modbus_OutputIO[startRegAddr]=0x00;
-               
+
 		RS485_tx_buf[0]=_data_buf[0];
 		RS485_tx_buf[1]=_data_buf[1];
 		RS485_tx_buf[2]=_data_buf[2];
 		RS485_tx_buf[3]=_data_buf[3];
 		RS485_tx_buf[4]=_data_buf[4];
 		RS485_tx_buf[5]=_data_buf[5];
-               
+
 		calCRC=CRC16(RS485_tx_buf,6);
 		RS485_tx_buf[6]=(calCRC>>8)&0xFF;
 		RS485_tx_buf[7]=calCRC&0xFF;
@@ -673,29 +673,29 @@ void Modbus_06_Handle(u8 * _data_buf)
 {
 	u16 calCRC;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	if(startRegAddr < MODBUS_REG_NUM)//寄存器地址在范围内
 	{
 		*Modbus_HoldReg[startRegAddr] = ((u16)_data_buf[4]) << 8;//高字节在前
 		*Modbus_HoldReg[startRegAddr] |= _data_buf[5];//低字节在后
-		
-		DATA_RANGE_CHECK ();
+
+		check_data ();
 		if (((startRegAddr < MODBUS_SAVE_DATA_START + MODBUS_SAVE_DATA_NUM + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START)) ||
-			  ((startRegAddr < MODBUS_SAVE_DATA_START_EX + MODBUS_SAVE_DATA_NUM_EX + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START_EX)) 
+			  ((startRegAddr < MODBUS_SAVE_DATA_START_EX + MODBUS_SAVE_DATA_NUM_EX + 1) && (startRegAddr >= MODBUS_SAVE_DATA_START_EX))
 			 )
 		{
 			data_change_flag = 1;
 			save_para (1); //save_para(1) 保存参数save_para(0) 读取参数
 		}
-		
+
 		RS485_tx_buf[0]=_data_buf[0];
 		RS485_tx_buf[1]=_data_buf[1];
 		RS485_tx_buf[2]=_data_buf[2];
 		RS485_tx_buf[3]=_data_buf[3];
 		RS485_tx_buf[4]=_data_buf[4];
 		RS485_tx_buf[5]=_data_buf[5];
-		   
+
 		calCRC=CRC16(RS485_tx_buf,6);
 		RS485_tx_buf[6]=(calCRC>>8)&0xFF;
 		RS485_tx_buf[7]=calCRC&0xFF;
@@ -717,18 +717,18 @@ void Modbus_15_Handle(u8 * _data_buf)
 	u16 calCRC;
 	u16 RegNum;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	RegNum=(((u16)_data_buf[4])<<8)|_data_buf[5];//获取寄存器数量
 	if((startRegAddr+RegNum - 1)<MODBUS_OUTPUT_NUM)//寄存器地址+数量在范围内
-	{       
+	{
 		for(i=0;i<RegNum;i++)
 		{
 		        if(_data_buf[7+i/8]&0x01) *Modbus_OutputIO[startRegAddr+i]=0x01;
 		        else *Modbus_OutputIO[startRegAddr+i]=0x00;
 		        _data_buf[7+i/8]>>=1;//从低位开始
 		}
-               
+
 		RS485_tx_buf[0]=_data_buf[0];
 		RS485_tx_buf[1]=_data_buf[1];
 		RS485_tx_buf[2]=_data_buf[2];
@@ -756,7 +756,7 @@ void Modbus_16_Handle(u8 * _data_buf)
 	u16 calCRC;
 	u16 RegNum;
 	u16 startRegAddr;
-	
+
 	startRegAddr=(((u16)_data_buf[2])<<8)|_data_buf[3];//获取寄存器起始地址
 	RegNum= (((u16)_data_buf[4])<<8)|_data_buf[5];//获取寄存器数量
 	if((startRegAddr+RegNum - 1)<MODBUS_REG_NUM)//寄存器地址+数量在范围内
@@ -770,23 +770,23 @@ void Modbus_16_Handle(u8 * _data_buf)
 				data_change_flag = 1;
 			}
 		}
-		DATA_RANGE_CHECK ();
+		check_data ();
 		if (data_change_flag == 1){
 			save_para (1); //save_para(1) 保存参数save_para(0) 读取参数
 		}
-               
+
 		RS485_tx_buf[0]=_data_buf[0];
 		RS485_tx_buf[1]=_data_buf[1];
 		RS485_tx_buf[2]=_data_buf[2];
 		RS485_tx_buf[3]=_data_buf[3];
 		RS485_tx_buf[4]=_data_buf[4];
 		RS485_tx_buf[5]=_data_buf[5];
-               
+
 		calCRC=CRC16(RS485_tx_buf,6);
 		RS485_tx_buf[6]=(calCRC>>8)&0xFF;
 		RS485_tx_buf[7]=calCRC&0xFF;
 		RS485_SendData(RS485_tx_buf,8);
-		
+
 		data_change_flag = 1;
 	}
 	else//寄存器地址+数量超出范围

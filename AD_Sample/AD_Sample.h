@@ -67,14 +67,14 @@
 #define REJ_TOO_CLOSE 	0x0020 //关门间隔太小
 
 
-	
+
 #define OPEN_DOOR(CH) { \
 	g_counter.ch[CH].door_close_delay = 0; \
 	/*g_counter.ch[CH].cur_count = 0;*/ \
 	g_counter.last_piece_chanel_id = 0xFFFF; \
 	g_counter.ch[CH].counter_state = NORMAL_COUNT; \
 	DOOR_##CH = 1; \
-}	
+}
 #define CHANEL_INIT(CH) { \
 	OPEN_DOOR(CH) \
 	g_counter.ch[CH].max_interval.data_hl = 0; \
@@ -89,6 +89,7 @@
 	g_counter.ch[CH].close_interval.data_hl = 0; \
 	g_counter.ch[CH].len.data_hl = 0; \
 	g_counter.ch[CH].area_sum.data_hl = 0; \
+	g_counter.ch[CH].cur_count = 0; \
 }
 #define CHANEL_DATA_CLEAR(CH) { \
 	g_counter.ch[CH].ad_max = 0; \
@@ -104,32 +105,32 @@
 }
 
 #define SEND_COUNTER_FIN_SIGNAL() { \
+	if (g_counter.rej_flag_buf.data.l > 0){ \
+		REJECT_FLAG = 0; \
+		g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*保存最后一次剔除原因*/ \
+	} \
 	g_counter.counter_fin_signal_delay = g_counter.set_min_interval.data_hl+20; \
 }
 
 #define COUNTER_FINISH_OP() { \
 	COUNT_COMPLETE = 0;  \
 	g_counter.complete_count++; /*数粒完成信号+1*/ \
-	if (g_counter.rej_flag_buf.data.l > 0){ \
-		REJECT_FLAG = 0; \
-		g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*保存最后一次剔除原因*/ \
-	} \
 }
-	
 
-enum CHANEL_STATE    
+
+enum CHANEL_STATE
 {
 	CH_IDLE = 0,
 	CH_BUSY,
 	CH_DATA_RDY
-};  
+};
 
-enum COUNTER_STATE    
+enum COUNTER_STATE
 {
 	COUNTER_IDLE = 0,
 	NORMAL_COUNT,
 	PRE_COUNT
-}; 
+};
 
 typedef struct
 {
@@ -145,7 +146,7 @@ typedef struct
 	U16 AD_min_index[3];
 }s_counter_env;
 
-typedef struct 
+typedef struct
 {
 	u16 buffer[AD_BUFF_SIZE];
 	u16 buffer_index;
@@ -162,7 +163,7 @@ typedef union{
 	}data;
 }s_32;
 
-typedef struct 
+typedef struct
 {
 	//s_chanel_pos pos[CHANEL_SENSOR_NUM];
 	U16 process_step;
@@ -269,7 +270,7 @@ extern u16 counter_process_time;
 extern int counter_process_state;
 
 extern U16 detect_chanel_index;//检测通道索引
-extern U16 chanel_pos_index;	//通道光敏二极管位置索引	
+extern U16 chanel_pos_index;	//通道光敏二极管位置索引
 extern s_counter_info g_counter;
 
 extern s_buf AD_buff;

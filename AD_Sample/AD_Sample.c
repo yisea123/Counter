@@ -30,26 +30,26 @@ void counter_init (void)
 	for (i = 0; i < sizeof(s_counter_info); i++)
 	{
 		*(p++) = 0;
-	}	
-	
+	}
+
 	memset ((void *)Detect_Buf, 0, sizeof(Detect_Buf));
 	memset ((void *)After_filter, 0, sizeof(After_filter));
 	memset ((void *)&AD_DMA_buf, 0, sizeof(AD_DMA_buf));
-	
+
 	COUNT_COMPLETE = 1;
-	
+
 	g_counter.AD_buf_p = 0;
 	g_counter.AD_use_buf_index = 0;
 	g_counter.counter_state = COUNTER_IDLE;
-	
+
 	for (i = 0; i < CHANEL_NUM; i++){
 		g_counter.ch[i].ad_min = 0xFFFF;
 		g_counter.ch[i].ad_max = 0;
 		g_counter.ch[i].ad_averaged_value = 0;
 	}
-	
+
 	g_counter.sim_ad_value = 35000;
-	
+
 	g_counter.max_len.data_hl = 0;
 	g_counter.max_close_interval.data_hl = 0;
 	g_counter.max_area_sum.data_hl = 0;
@@ -126,7 +126,7 @@ void counter_data_clear (void)
 	g_counter.min_len.data_hl = 0xFFFFFFFF;
 	g_counter.min_close_interval.data_hl = 0xFFFFFFFF;
 	g_counter.min_area_sum.data_hl = 0xFFFFFFFF;
-	
+
 	OS_EXIT_CRITICAL();
 }
 
@@ -136,7 +136,7 @@ void AD_GPIO_Configuration(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	/*开启GPIOB和GPIOF的外设时钟*/
-	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOE, ENABLE); 
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOE, ENABLE);
 	//PA0/1/2/3 作为模拟通道输入引脚
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0| GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //模拟输入引脚
@@ -151,8 +151,8 @@ void AD_GPIO_Configuration(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //模拟输入引脚
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
-	
-	
+
+
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6;				 //
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
@@ -216,8 +216,8 @@ void ADC1_Configuration(void)
 {
 	ADC_InitTypeDef ADC_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
-	
-	
+
+
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE ); //使能ADC1通道时钟，各个管脚时钟
 
@@ -237,7 +237,7 @@ void ADC1_Configuration(void)
 
 	// 开启ADC的DMA支持（要实现DMA功能，还需独立配置DMA通道等参数）
 	ADC_DMACmd(ADC1, ENABLE);
-	
+
 	//开启模拟看门狗
 //	ADC_AnalogWatchdogThresholdsConfig(ADC1,0xfff,0);
 //	ADC_AnalogWatchdogCmd(ADC1,ADC_AnalogWatchdog_AllRegEnable);
@@ -250,8 +250,8 @@ void ADC1_Configuration(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 
 	NVIC_InitStructure.NVIC_IRQChannel = ADC1_2_IRQn;
-	NVIC_Init(&NVIC_InitStructure);  
-	
+	NVIC_Init(&NVIC_InitStructure);
+
 	ADC_Cmd(ADC1, ENABLE); //使能指定的ADC1
 
 	ADC_ResetCalibration(ADC1); //复位指定的ADC1的校准寄存器
@@ -286,13 +286,13 @@ void re_calibration_detect (void)
 
 
 U16 detect_chanel_index = 0xFFFF;//检测通道索引
-U16 chanel_pos_index = 0;	//通道光敏二极管位置索引	
+U16 chanel_pos_index = 0;	//通道光敏二极管位置索引
 U16 ADC_sync_signal = 0; //ADC转换处理同步信号
 U16 ADC1_irq_cycle = 23;
 U16 ADC1_process_time = 6;
 //ADC中断服务函数
 void ADC1_2_IRQHandler(void)
-{   
+{
 	//U16 temp;
 //	unsigned long long tick_old;
 //	tick_old = get_tim5_ticks();
@@ -301,7 +301,7 @@ void ADC1_2_IRQHandler(void)
 //	if (ADC_GetITStatus(ADC1, ADC_IT_AWD) != RESET){//电眼故障时进这里
 //		detect_chanel_index = CHANEL_NUM - (DMA_GetCurrDataCounter (DMA1_Channel1) % CHANEL_NUM);
 //		ADC_ClearFlag(ADC1, ADC_FLAG_AWD);
-//		ADC_ClearITPendingBit(ADC1, ADC_IT_AWD); 
+//		ADC_ClearITPendingBit(ADC1, ADC_IT_AWD);
 //	}else
 //	if (ADC_GetITStatus(ADC1, ADC_IT_EOC)){//这里不用判断ADC_IT_EOC是否置位，因为用了DMA后，转换完成硬件会清零ADC_IT_EOC位
 		chanel_pos_index++; //采样处理下一个光敏二极管
@@ -311,7 +311,7 @@ void ADC1_2_IRQHandler(void)
 		ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 //	}
 ////////////////////////////////////////////////////////////////////
-//	ADC1_process_time = get_tim5_ticks () - tick_old + 2;  	
+//	ADC1_process_time = get_tim5_ticks () - tick_old + 2;
 }
 
 
@@ -320,7 +320,7 @@ void AD1_DMA_Configuration(void)
 
 	DMA_InitTypeDef DMA_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
-	
+
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE); //使能DMA传输
 	DMA_DeInit(DMA1_Channel1); //将DMA的通道1寄存器重设为缺省值
 	DMA_InitStructure.DMA_PeripheralBaseAddr = (u32)&ADC1->DR; //DMA外设ADC基地址
@@ -335,15 +335,15 @@ void AD1_DMA_Configuration(void)
 	DMA_InitStructure.DMA_Priority = DMA_Priority_High; //DMA通道 x拥有高优先级
 	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable; //DMA通道x没有设置为内存到内存传输
 	DMA_Init(DMA1_Channel1, &DMA_InitStructure); //根据DMA_InitStruct中指定的参数初始化DMA的通道
-	
+
 	DMA_ITConfig(DMA1_Channel1, DMA_IT_TC | DMA_IT_HT, ENABLE); //传输结束中断
-     
+
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = DMA1_1_INT_PREEM;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = DMA1_1_INT_SUB;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 
 	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel1_IRQn;
-	NVIC_Init(&NVIC_InitStructure);   
+	NVIC_Init(&NVIC_InitStructure);
 
 }
 int counter_process_state;
@@ -393,8 +393,8 @@ void counter_process (void);
 		} \
 	}
 #endif
-	
-#if (SAMPLE_NUM == 8) 
+
+#if (SAMPLE_NUM == 8)
 	#define AD_FILTER(AD,BUF,C,S) {\
 		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
 				BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
@@ -416,12 +416,12 @@ void counter_process (void);
 	}
 #endif
 
-	
+
 void pause_vibrate (void)
 {
 	VIBRATE_SWITCH = 1;
 }
-	
+
 void start_vibrate (void)
 {
 #if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
@@ -450,14 +450,14 @@ void start_vibrate (void)
 	}else{//多数或者刚好数够
 		g_counter.total_count = g_counter.pre_count;
 		g_counter.pre_count = 0;
-		COUNTER_FINISH_OP ();
+		SEND_COUNTER_FIN_SIGNAL ();
 		g_counter.counter_state = PRE_COUNT;
 		if (g_counter.pre_count < g_counter.set_pre_count){//达到设定的预数
 			VIBRATE_SWITCH = 0;
 		}
 	}
 	OS_EXIT_CRITICAL();
-}	
+}
 void stop_vibrate (void)
 {
 	VIBRATE_SWITCH = 1;
@@ -486,7 +486,7 @@ void AD_Start_Sample (u32 _memBaseAddr)
 
 
 int save_detect_data (U16 _ch, U16 * _index, U16 _ad_value)
-{	
+{
 //	if (_ad_value == 0)
 //	{
 //		_ad_value = _ad_value;
@@ -539,23 +539,23 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 {
 	int r_code = 0;
 	int ad_change_v = 0;
-	
+
 	ad_change_v =  _ch->std_down_v - _ad_value_;
 	if (ad_change_v < 0){
 		ad_change_v = 0;
 	}
-	switch(_ch->process_step){ 
+	switch(_ch->process_step){
 		case 0: {
-			
+
 			_ch->wave_down_flag = 0;
 			_ch->wave_up_flag = 0;
 			_ch->ad_value_min = AD_MAX_V;
 			_ch->ad_value_min_temp = AD_MAX_V;
-			
+
 			_ch->cur_count = 0;
 			_ch->counter_state = NORMAL_COUNT;
 			_ch->sample_index = 0;
-			
+
 			_ch->process_step = 6;
 			_ch->state = CH_IDLE;
 			_ch->interval_ticks = get_sys_run_time ();
@@ -568,16 +568,16 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 			_ch->min_close_interval.data_hl = 0xFFFFFFFF;
 			_ch->min_area_sum.data_hl = 0xFFFFFFFF;
 			_ch->area_sum.data_hl = 0;
-			
+
 			break;
 		}
-		case 6:{ 
+		case 6:{
 			if (_ad_value_ < _ch->std_down_v){
 				r_code = save_detect_data (_ch_id, &_ch->sample_index, _ad_value_);
 				_ch->state = CH_BUSY;
 				_ch->wave_down_flag++;
-				_ch->area_sum_buf += ad_change_v;
-				
+//				_ch->area_sum_buf += ad_change_v;
+
 				if (_ad_value_ < _ch->ad_value_min_temp){
 					_ch->ad_value_min_temp = _ad_value_;
 				}
@@ -587,9 +587,9 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				_ch->state = CH_IDLE;
 				_ch->ad_value_min_temp = 0xFFFF;
 				_ch->ad_value_min = 0xFFFF;
-				_ch->area_sum_buf = 0;
+//				_ch->area_sum_buf = 0;
 			}
-			
+
 			if (_ch->wave_down_flag > WAVE_DOWN){//检测到有药粒
 				_ch->length_ticks = get_sys_run_time ();
 				_ch->interval.data_hl = _ch->length_ticks - _ch->interval_ticks;
@@ -608,26 +608,26 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							}
 						}
 					}else{//已经达到设定的计数量，开始预数
-						_ch->door_close_delay = g_counter.set_door_n_close_delay[_ch_id];/*小料门关闭延时*/ 
-						_ch->close_interval.data_hl = _ch->interval.data_hl; 
-						if (_ch->close_interval.data_hl < g_counter.set_min_interval.data_hl){/*小料门关闭时药粒间隔太小*/  
-							REJECT_FLAG = 0; 
-							g_counter.rej_flag_buf.data.h |= REJ_TOO_CLOSE; 
-							g_counter.rej_flag_buf.data.l |= REJ_TOO_CLOSE; 
-							//g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/ 
-						} 
-						if (_ch->close_interval.data_hl > _ch->max_close_interval.data_hl){ 
-							_ch->max_close_interval.data_hl = _ch->close_interval.data_hl; 
-							if (_ch->max_close_interval.data_hl > g_counter.max_close_interval.data_hl){ 
-								g_counter.max_close_interval.data_hl = _ch->max_close_interval.data_hl; 
-							} 
-						} 
-						if (_ch->close_interval.data_hl < _ch->min_close_interval.data_hl){ 
-							_ch->min_close_interval.data_hl = _ch->close_interval.data_hl; 
-							if (_ch->min_close_interval.data_hl < g_counter.min_close_interval.data_hl){ 
-								g_counter.min_close_interval.data_hl = _ch->min_close_interval.data_hl; 
-							} 
-						} 
+						_ch->door_close_delay = g_counter.set_door_n_close_delay[_ch_id];/*小料门关闭延时*/
+						_ch->close_interval.data_hl = _ch->interval.data_hl;
+						if (_ch->close_interval.data_hl < g_counter.set_min_interval.data_hl){/*小料门关闭时药粒间隔太小*/
+							g_counter.rej_flag_buf.data.h |= REJ_TOO_CLOSE;
+							g_counter.rej_flag_buf.data.l |= REJ_TOO_CLOSE;
+							REJECT_FLAG = 0;
+							g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/
+						}
+						if (_ch->close_interval.data_hl > _ch->max_close_interval.data_hl){
+							_ch->max_close_interval.data_hl = _ch->close_interval.data_hl;
+							if (_ch->max_close_interval.data_hl > g_counter.max_close_interval.data_hl){
+								g_counter.max_close_interval.data_hl = _ch->max_close_interval.data_hl;
+							}
+						}
+						if (_ch->close_interval.data_hl < _ch->min_close_interval.data_hl){
+							_ch->min_close_interval.data_hl = _ch->close_interval.data_hl;
+							if (_ch->min_close_interval.data_hl < g_counter.min_close_interval.data_hl){
+								g_counter.min_close_interval.data_hl = _ch->min_close_interval.data_hl;
+							}
+						}
 						_ch->cur_count = 1;
 						g_counter.pre_count++;
 						if (g_counter.pre_count >= g_counter.set_pre_count){//达到设定的预数
@@ -667,39 +667,39 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				///////////////////////////////////////////////////////////////////////////////////////////
 			}
 			break;
-		} 
-		case 16:{	
-			
+		}
+		case 16:{
+
 			r_code = save_detect_data (_ch_id, &_ch->sample_index, _ad_value_);
-			
-			_ch->area_sum_buf += ad_change_v;
-			
+
+//			_ch->area_sum_buf += ad_change_v;
+
 			if (_ad_value_ < _ch->ad_value_min_temp){
 				_ch->ad_value_min_temp = _ad_value_;
 				_ch->wave_up_flag = 0;
 			}else if (_ad_value_ > _ch->ad_value_min_temp + WAVE_UP_V){
 				_ch->wave_up_flag++;
 			}
-			
+
 			if (_ch->wave_up_flag > WAVE_UP){//经过了波谷后
 				_ch->ad_value_min = _ch->ad_value_min_temp;
 				_ch->ad_value_min_temp = AD_MAX_V;
 				_ch->wave_up_flag = 0;
 				_ch->process_step = 31;
 			}
-			
+
 			break;
 		}
 		case 31:{/*判断是否跟参考值相同或相近,确定最大采样值,波形恢复到参考值*/
-			
+
 			r_code = save_detect_data (_ch_id, &_ch->sample_index, _ad_value_);
-			
+
 			if (_ad_value_ >= _ch->std_up_v){
 				_ch->wave_up_flag++;
 			}else{
 				_ch->wave_up_flag = 0;
 			}
-			
+
 			if (_ch->wave_up_flag > WAVE_UP){
 				_ch->interval_ticks = get_sys_run_time ();
 				_ch->len.data_hl = _ch->interval_ticks - _ch->length_ticks;
@@ -715,10 +715,10 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 						g_counter.min_len.data_hl = _ch->min_len.data_hl;
 					}
 				}
-				
+
 				_ch->area_sum.data_hl = ((g_counter.ch[_ch_id].std_v - _ch->ad_value_min) *_ch->len.data_hl) / 20;
-				//_ch->area_sum.data_hl = _ch->area_sum_buf + ad_change_v;//最终面积
-				_ch->area_sum_buf = 0;
+//				_ch->area_sum.data_hl = _ch->area_sum_buf + ad_change_v;//最终面积
+//				_ch->area_sum_buf = 0;
 				if (_ch->area_sum.data_hl > _ch->max_area_sum.data_hl){
 					_ch->max_area_sum.data_hl = _ch->area_sum.data_hl;
 					if (_ch->max_area_sum.data_hl > g_counter.max_area_sum.data_hl){
@@ -731,7 +731,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 						g_counter.min_area_sum.data_hl = _ch->min_area_sum.data_hl;
 					}
 				}
-				
+
 				//药粒出了检测区，更新剔除信号////////////////////////////////////////////////////////////////////////
 				if (_ch->counter_state == NORMAL_COUNT){//正常数粒
 					if (_ch->len.data_hl > g_counter.set_max_len.data_hl){ //超过设定长度
@@ -765,7 +765,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 				_ch->sample_index = 0;
 				_ch->wave_up_flag = 0;
 			}
-			
+
 			break;
 		}
 	}
@@ -784,7 +784,7 @@ u16 dma_irq_cycle = 0;
 uint16_t tim5_dma_cur_cnt = 0;
 uint16_t tim5_dma_pre_cnt = 0;
 void DMA1_Channel1_IRQHandler(void)
-{     
+{
 	static int process_rdy_old = 0;
 	int r_code = 0, i;
 	//tick_old = get_tim5_ticks();
@@ -806,7 +806,7 @@ void DMA1_Channel1_IRQHandler(void)
 	}
 	DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
 	if (g_counter.AD_buf_p != 0){
-		if (process_rdy < PROCESS_RDY){	
+		if (process_rdy < PROCESS_RDY){
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 0, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 1, SAMPLE_NUM);
 			GET_STD_AD_V (After_filter, g_counter.AD_buf_p, 2, SAMPLE_NUM);
@@ -822,16 +822,16 @@ void DMA1_Channel1_IRQHandler(void)
 
 			if ((process_rdy + 1) == PROCESS_RDY){
 				for (i = 0; i < CHANEL_NUM; i++){
-					if (g_counter.ch[i].std_v > STD_UP_V_OFFSET) { 
-						g_counter.ch[i].std_up_v = g_counter.ch[i].std_v - STD_UP_V_OFFSET; 
-					}else{ 
+					if (g_counter.ch[i].std_v > STD_UP_V_OFFSET) {
+						g_counter.ch[i].std_up_v = g_counter.ch[i].std_v - STD_UP_V_OFFSET;
+					}else{
 						g_counter.ch[i].std_up_v = g_counter.ch[i].std_v;
-					} 
-					if (g_counter.ch[i].std_v > STD_DOWN_V_OFFSET) { 
-						g_counter.ch[i].std_down_v = g_counter.ch[i].std_v - STD_DOWN_V_OFFSET; 
-					}else{ 
+					}
+					if (g_counter.ch[i].std_v > STD_DOWN_V_OFFSET) {
+						g_counter.ch[i].std_down_v = g_counter.ch[i].std_v - STD_DOWN_V_OFFSET;
+					}else{
 						g_counter.ch[i].std_down_v = g_counter.ch[i].std_v;
-					} 
+					}
 				}
 				process_rdy = PROCESS_RDY;
 				COUNTER_FINISH_OP ();
@@ -855,7 +855,7 @@ void DMA1_Channel1_IRQHandler(void)
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 9, SAMPLE_NUM);
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
-			
+
 			After_filter[0] = g_counter.sim_ad_value;
 			r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
 			r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);
@@ -869,7 +869,7 @@ void DMA1_Channel1_IRQHandler(void)
 			r_code += count_piece (&g_counter.ch[9], After_filter[9], 9);
 			r_code += count_piece (&g_counter.ch[10], After_filter[10], 10);
 			r_code += count_piece (&g_counter.ch[11], After_filter[11], 11);
-			
+
 			if (my_env.print == 1){
 				if (r_code != 0){
 				}else if (g_counter.ch[g_counter.set_watch_ch].state == CH_DATA_RDY){
@@ -888,15 +888,15 @@ void DMA1_Channel1_IRQHandler(void)
 					OSQPost(debug_msg, (void *) 0x55);//发送消息
 				}
 			}
-			
+
 		//	counter_process_state = r_code;
 		//////////////////////////////// process end /////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////////////
 		}
-	} 
+	}
 //////////////////////////////////////////////////////////////////////
-	counter_process_time = get_tim5_ticks () - tim5_dma_cur_cnt + 2;  	
+	counter_process_time = get_tim5_ticks () - tim5_dma_cur_cnt + 2;
 }
 
 
