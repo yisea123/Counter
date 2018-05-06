@@ -270,18 +270,26 @@ void re_calibration_detect (void)
 #if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
     OS_CPU_SR  cpu_sr = 0u;
 #endif
+	counter_reset ();
 	OS_ENTER_CRITICAL();
 	COUNT_COMPLETE = 1;
 	VIBRATE_SWITCH = 1;
-	process_rdy = 0;
-	set_adc1_sample_time ();
+//	ADC_SoftwareStartConvCmd(ADC1, DISABLE);
+//	DMA_Cmd(DMA1_Channel1, DISABLE); //启动DMA通道
+//	DMA1_Channel1->CMAR = (u32)&AD_DMA_buf; //DMA内存基地址
+//	DMA1_Channel1->CNDTR = SAMPLE_NUM * CHANEL_NUM * 2; //DMA通道的DMA缓存的大小
+//	set_adc1_sample_time ();
 	for (i = 0; i < CHANEL_NUM; i++){
 		g_counter.ch[i].ad_max = 0;
 		g_counter.ch[i].ad_min = 0xFFFF;
 		g_counter.ch[i].std_v = 0;
 		g_counter.ch[i].ad_averaged_value = 0;
 	}
+	process_rdy = 0;
+	AD_Sample_init ();
 	OS_EXIT_CRITICAL();
+//	DMA_Cmd(DMA1_Channel1, ENABLE); //启动DMA通道
+//	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
 
 
@@ -801,7 +809,7 @@ void DMA1_Channel1_IRQHandler(void)
 		g_counter.AD_buf_p = AD_DMA_buf.AD_Value_0;
 	}else if(DMA_GetITStatus(DMA1_IT_TC1)){
 		g_counter.AD_buf_p = AD_DMA_buf.AD_Value_1;
-	}else if (DMA_GetITStatus(DMA1_IT_TC1)){
+	}else if (DMA_GetITStatus(DMA1_IT_TE1)){
 		g_counter.AD_buf_p = 0;
 	}
 	DMA_ClearITPendingBit(DMA1_IT_GL1); //清除全部中断标志
@@ -856,7 +864,7 @@ void DMA1_Channel1_IRQHandler(void)
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 10, SAMPLE_NUM);
 			AD_FILTER (After_filter, g_counter.AD_buf_p, 11, SAMPLE_NUM);
 
-			After_filter[0] = g_counter.sim_ad_value;
+			//After_filter[0] = g_counter.sim_ad_value;
 			r_code += count_piece (&g_counter.ch[0], After_filter[0], 0);
 			r_code += count_piece (&g_counter.ch[1], After_filter[1], 1);
 			r_code += count_piece (&g_counter.ch[2], After_filter[2], 2);

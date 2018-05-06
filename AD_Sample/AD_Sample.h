@@ -70,7 +70,7 @@
 
 #define OPEN_DOOR(CH) { \
 	g_counter.ch[CH].door_close_delay = 0; \
-	/*g_counter.ch[CH].cur_count = 0;*/ \
+	g_counter.ch[CH].cur_count = 0; \
 	g_counter.last_piece_chanel_id = 0xFFFF; \
 	g_counter.ch[CH].counter_state = NORMAL_COUNT; \
 	DOOR_##CH = 1; \
