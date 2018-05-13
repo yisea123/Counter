@@ -231,6 +231,7 @@ typedef struct
 	U16 counter_fin_signal_delay;
 	U16 last_piece_chanel_id;//最后一粒所在的通道号
 	U16 rej_flag;
+	U16 rej_flag_clear_delay;
 	s_32 rej_flag_buf;
 	s_32 area_sum;//截面积
 	s_32 min_area_sum;

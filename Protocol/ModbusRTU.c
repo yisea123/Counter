@@ -367,15 +367,19 @@ void check_data (void)
 	if (g_counter.set_std_up_v_offset < 1){
 		g_counter.set_std_up_v_offset = 1;
 	}
-	if (g_counter.set_door_close_delay < 1){
-		g_counter.set_door_close_delay = 1;
-	}
+//	if (g_counter.set_door_close_delay < 1){
+//		g_counter.set_door_close_delay = 1;
+//	}
 	if (g_counter.set_min_interval.data_hl < 5){
 		g_counter.set_min_interval.data_hl = 5;
 	}
 	for (i = 0; i < CHANEL_NUM; i++){
-		if (g_counter.set_door_n_close_delay[i] < 1){
-			g_counter.set_door_n_close_delay[i] = 1;
+		if (g_counter.set_door_close_delay == 0){
+			if (g_counter.set_door_n_close_delay[i] < 1){
+				g_counter.set_door_n_close_delay[i] = 1;
+			}
+		}else{
+			g_counter.set_door_n_close_delay[i] = g_counter.set_door_close_delay;
 		}
 	}
 	DATA_RANGE_CHECK ();

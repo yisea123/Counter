@@ -392,6 +392,7 @@ void io_task (void *pdata)
 				if (PLC_ACK == 1){
 					start_vibrate ();
 					g_counter.counter_step = 0;
+					g_counter.rej_flag_clear_delay = 20000;//设定2秒后清零剔除标志
 				}
 				break;
 			case 100://错误入口

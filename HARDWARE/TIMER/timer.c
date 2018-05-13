@@ -97,6 +97,14 @@ void TIM2_IRQHandler(void)   //TIM2中断
 				COUNTER_FINISH_OP ();
 			}
 		}
+		if (g_counter.rej_flag_clear_delay > 0){
+			g_counter.rej_flag_clear_delay--;
+			if (g_counter.rej_flag_clear_delay == 0){
+				if (g_counter.rej_flag_buf.data.l == 0){//如果当前没有剔除，则清零剔除原因
+					g_counter.rej_flag = 0;
+				}
+			}
+		}
 	}
 ///////////////////////////////////////////////////////////////////////////////////////////
 	tim2_irq_process_time = get_tim5_ticks () - tick_old + 2;

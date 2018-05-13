@@ -274,11 +274,6 @@ void re_calibration_detect (void)
 	OS_ENTER_CRITICAL();
 	COUNT_COMPLETE = 1;
 	VIBRATE_SWITCH = 1;
-//	ADC_SoftwareStartConvCmd(ADC1, DISABLE);
-//	DMA_Cmd(DMA1_Channel1, DISABLE); //启动DMA通道
-//	DMA1_Channel1->CMAR = (u32)&AD_DMA_buf; //DMA内存基地址
-//	DMA1_Channel1->CNDTR = SAMPLE_NUM * CHANEL_NUM * 2; //DMA通道的DMA缓存的大小
-//	set_adc1_sample_time ();
 	for (i = 0; i < CHANEL_NUM; i++){
 		g_counter.ch[i].ad_max = 0;
 		g_counter.ch[i].ad_min = 0xFFFF;
@@ -288,8 +283,6 @@ void re_calibration_detect (void)
 	process_rdy = 0;
 	AD_Sample_init ();
 	OS_EXIT_CRITICAL();
-//	DMA_Cmd(DMA1_Channel1, ENABLE); //启动DMA通道
-//	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 }
 
 
