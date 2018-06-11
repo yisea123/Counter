@@ -262,6 +262,7 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(506, g_counter.min_len.data.l);
 	MAP_MODBUS_HOLDREG(507, g_counter.min_interval.data.h);
 	MAP_MODBUS_HOLDREG(508, g_counter.min_interval.data.l);
+	MAP_MODBUS_HOLDREG(509, g_counter.system_states);//µÿ÷∑510
 
 	for (i = 0; i < 12; i++){
 		MAP_MODBUS_HOLDREG(512 + i, g_counter.set_door_n_close_delay[i]);

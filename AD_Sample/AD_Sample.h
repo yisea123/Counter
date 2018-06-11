@@ -108,6 +108,7 @@
 	if (g_counter.rej_flag_buf.data.l > 0){ \
 		REJECT_FLAG = 0; \
 		g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*保存最后一次剔除原因*/ \
+		g_counter.rej_flag_clear_delay = 20000;/*设定2秒后清零剔除标志*/ \
 	} \
 	g_counter.counter_fin_signal_delay = g_counter.set_min_interval.data_hl+20; \
 }
@@ -252,6 +253,7 @@ typedef struct
 	U16 sim_ad_value;
 	U16 sim_flag;
 	U16 set_door_n_close_delay[CHANEL_NUM];
+	U16 system_states;
 }s_counter_info;
 
 void AD_filter(U16 _detect_chanel_index, U16 _chanel_pos_index);

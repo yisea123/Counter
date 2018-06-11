@@ -448,7 +448,11 @@ void start_vibrate (void)
 		g_counter.counter_state = NORMAL_COUNT;
 		PRE_COUNT_FLAG = 1;
 		VIBRATE_SWITCH = 0;
-	}else{//多数或者刚好数够
+		OS_EXIT_CRITICAL();
+	}else{//预数粒多数或者刚好数够
+		OS_EXIT_CRITICAL();
+		delay_ms (500);//延时一段时间再给信号
+		OS_ENTER_CRITICAL();
 		g_counter.total_count = g_counter.pre_count;
 		g_counter.pre_count = 0;
 		SEND_COUNTER_FIN_SIGNAL ();
@@ -456,8 +460,8 @@ void start_vibrate (void)
 		if (g_counter.pre_count < g_counter.set_pre_count){//达到设定的预数
 			VIBRATE_SWITCH = 0;
 		}
+		OS_EXIT_CRITICAL();
 	}
-	OS_EXIT_CRITICAL();
 }
 void stop_vibrate (void)
 {
@@ -616,6 +620,7 @@ int count_piece(s_chanel_info * _ch, U16 _ad_value_, U16 _ch_id)
 							g_counter.rej_flag_buf.data.l |= REJ_TOO_CLOSE;
 							REJECT_FLAG = 0;
 							g_counter.rej_flag = g_counter.rej_flag_buf.data.l; /*更新剔除原因*/
+							g_counter.rej_flag_clear_delay = 20000;//设定2秒后清零剔除标志
 						}
 						if (_ch->close_interval.data_hl > _ch->max_close_interval.data_hl){
 							_ch->max_close_interval.data_hl = _ch->close_interval.data_hl;
