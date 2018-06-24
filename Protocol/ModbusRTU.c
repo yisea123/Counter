@@ -161,8 +161,8 @@ void Modbus_RegMap(void)
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 9, 	g_counter.set_max_len.data.l);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 10, g_counter.set_min_len.data.h);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 11, g_counter.set_min_len.data.l);
-	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 12, g_counter.set_std_down_v_offset);
-	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 13, g_counter.set_std_up_v_offset);
+	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 12, g_counter.set_std_numerator);
+	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 13, g_counter.set_std_denumerator);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 14, g_counter.set_wave_down_flag);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 15, g_counter.set_wave_up_flag);
 	MAP_MODBUS_HOLDREG(MODBUS_SAVE_DATA_START + 16, g_counter.set_wave_up_value);
@@ -353,8 +353,8 @@ int save_para (int flag)
 void check_data (void)
 {
 	int i;
-	if ((g_counter.set_std_down_v_offset < 1) || (g_counter.set_std_down_v_offset > 100)){
-		g_counter.set_std_down_v_offset = 5;
+	if ((g_counter.set_std_numerator < 1) || (g_counter.set_std_numerator > 100)){
+		g_counter.set_std_numerator = 5;
 	}
 	if ((g_counter.set_wave_down_flag < 1) || (g_counter.set_wave_down_flag > 1000)){
 		g_counter.set_wave_down_flag = 8;
@@ -365,8 +365,8 @@ void check_data (void)
 	if ((g_counter.set_wave_up_value < 1) || (g_counter.set_wave_up_value > 1000)){
 		g_counter.set_wave_up_value = 16;
 	}
-	if (g_counter.set_std_up_v_offset < 1){
-		g_counter.set_std_up_v_offset = 1;
+	if (g_counter.set_std_denumerator < 1){
+		g_counter.set_std_denumerator = 1;
 	}
 //	if (g_counter.set_door_close_delay < 1){
 //		g_counter.set_door_close_delay = 1;

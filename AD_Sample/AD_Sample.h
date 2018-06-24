@@ -14,8 +14,8 @@
 
 
 #define STD_VALUE 31000
-//#define STD_DOWN_V_OFFSET g_counter.set_std_down_v_offset
-//#define STD_UP_V_OFFSET g_counter.set_std_up_v_offset
+//#define STD_DOWN_V_OFFSET g_counter.set_std_numerator
+//#define STD_UP_V_OFFSET g_counter.set_std_denumerator
 #define STD_DOWN_V_OFFSET g_counter.ch[i].std_down_offset
 #define STD_UP_V_OFFSET g_counter.ch[i].std_up_offset
 //#define STD_DOWN_V (STD_VALUE - STD_DOWN_V_OFFSET)
@@ -224,8 +224,8 @@ typedef struct
 	U32 buf_addr;
 	vu16 (* AD_buf_p)[CHANEL_NUM];
 	U16 counter_step;
-	U16 set_std_up_v_offset;
-	U16 set_std_down_v_offset;
+	U16 set_std_denumerator;
+	U16 set_std_numerator;
 	U16 set_wave_down_flag;
 	U16 set_wave_up_flag;
 	U16 set_wave_up_value;

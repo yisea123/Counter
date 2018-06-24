@@ -364,7 +364,10 @@ void counter_process (void);
 		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
 			g_counter.ch[C].ad_fitter_index = 0; \
 		} \
+		g_counter.ch[C].ad_averaged_value -= g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index]; \
 		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
+		g_counter.ch[C].ad_averaged_value += AD[C]; \
+		AD[C] = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
 		g_counter.ch[C].ad_fitter_index++; \
 		if (process_rdy > START_DATA){ \
 			if (AD[C] > g_counter.ch[C].ad_max){ \
@@ -387,10 +390,10 @@ void counter_process (void);
 			g_counter.ch[C].std_v = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
 			g_counter.ch[C].std_down_offset = (g_counter.ch[C].ad_max - g_counter.ch[C].ad_min); \
 			g_counter.ch[C].std_up_offset = (g_counter.ch[C].ad_max - g_counter.ch[C].ad_min - 1); \
-			g_counter.ch[C].std_down_offset *= g_counter.set_std_down_v_offset; \
-			g_counter.ch[C].std_up_offset *= g_counter.set_std_down_v_offset; \
-			g_counter.ch[C].std_down_offset /= (g_counter.set_std_up_v_offset); \
-			g_counter.ch[C].std_up_offset /= (g_counter.set_std_up_v_offset); \
+			g_counter.ch[C].std_down_offset *= g_counter.set_std_numerator; \
+			g_counter.ch[C].std_up_offset *= g_counter.set_std_numerator; \
+			g_counter.ch[C].std_down_offset /= (g_counter.set_std_denumerator); \
+			g_counter.ch[C].std_up_offset /= (g_counter.set_std_denumerator); \
 		} \
 	}
 #endif
