@@ -25,7 +25,7 @@ s_counter_env counter_env;
 
 void counter_init (void)
 {
-	int i;
+	int i, j;
 	S8 *p = (S8 *) &g_counter;
 	for (i = 0; i < sizeof(s_counter_info); i++)
 	{
@@ -46,6 +46,9 @@ void counter_init (void)
 		g_counter.ch[i].ad_min = 0xFFFF;
 		g_counter.ch[i].ad_max = 0;
 		g_counter.ch[i].ad_averaged_value = 0;
+		for (j = 0; j < AD_FITTER_BUFF_SIZE; j++){
+			g_counter.ch[i].ad_fitter_buff[j] = 0;
+		}
 	}
 
 	g_counter.sim_ad_value = 35000;
@@ -266,7 +269,7 @@ void ADC1_Configuration(void)
 
 void re_calibration_detect (void)
 {
-	int i;
+	int i, j;
 #if OS_CRITICAL_METHOD == 3u                           /* Allocate storage for CPU status register     */
     OS_CPU_SR  cpu_sr = 0u;
 #endif
@@ -279,6 +282,9 @@ void re_calibration_detect (void)
 		g_counter.ch[i].ad_min = 0xFFFF;
 		g_counter.ch[i].std_v = 0;
 		g_counter.ch[i].ad_averaged_value = 0;
+		for (j = 0; j < AD_FITTER_BUFF_SIZE; j++){
+			g_counter.ch[i].ad_fitter_buff[j] = 0;
+		}
 	}
 	process_rdy = 0;
 	AD_Sample_init ();
@@ -355,20 +361,26 @@ void counter_process (void);
 //输入:无
 //输出:无
 //============================================
-#define START_DATA 5
 #if (SAMPLE_NUM == 8)
-	#define GET_STD_AD_V(AD,BUF,C,S)  {\
+#define AD_PRE_FITTER(AD,BUF,C,S) { \
 		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
-				BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
-		/*AD[C] /= S; */ \
+						BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
 		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
 			g_counter.ch[C].ad_fitter_index = 0; \
 		} \
+		g_counter.ch[C].ad_averaged_value += AD[C]; \
 		g_counter.ch[C].ad_averaged_value -= g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index]; \
 		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
-		g_counter.ch[C].ad_averaged_value += AD[C]; \
 		AD[C] = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
 		g_counter.ch[C].ad_fitter_index++; \
+	}
+
+#endif
+
+
+#if (SAMPLE_NUM == 8)
+	#define GET_STD_AD_V(AD,BUF,C,S)  {\
+		AD_PRE_FITTER (AD,BUF,C,S) \
 		if (process_rdy > START_DATA){ \
 			if (AD[C] > g_counter.ch[C].ad_max){ \
 				g_counter.ch[C].ad_max = AD[C]; \
@@ -377,16 +389,10 @@ void counter_process (void);
 				g_counter.ch[C].ad_min = AD[C]; \
 			} \
 			if (process_rdy != process_rdy_old) { \
-				g_counter.ch[C].std_v += AD[C] / (PROCESS_RDY - 1 - (START_DATA + 1)); \
+				g_counter.ch[C].std_v += AD[C] / (PROCESS_RDY - (START_DATA) - 1); \
 			}\
 		} \
 		if ((process_rdy + 1) == PROCESS_RDY){ \
-			for (g_counter.ch[C].ad_fitter_index = 0; \
-					g_counter.ch[C].ad_fitter_index < AD_FITTER_BUFF_SIZE; \
-					g_counter.ch[C].ad_fitter_index++){ \
-				g_counter.ch[C].ad_averaged_value += g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index]; \
-			} \
-			g_counter.ch[C].ad_fitter_index = 0; \
 			g_counter.ch[C].std_v = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
 			g_counter.ch[C].std_down_offset = (g_counter.ch[C].ad_max - g_counter.ch[C].ad_min); \
 			g_counter.ch[C].std_up_offset = (g_counter.ch[C].ad_max - g_counter.ch[C].ad_min - 1); \
@@ -400,17 +406,7 @@ void counter_process (void);
 
 #if (SAMPLE_NUM == 8)
 	#define AD_FILTER(AD,BUF,C,S) {\
-		AD[C] = BUF[0][C] + BUF[1][C] + BUF[2][C] + BUF[3][C] + \
-				BUF[4][C] + BUF[5][C] + BUF[6][C] + BUF[7][C]; \
-		 /*AD[C] /= S; */\
-		if (g_counter.ch[C].ad_fitter_index >= AD_FITTER_BUFF_SIZE){ \
-			g_counter.ch[C].ad_fitter_index = 0; \
-		} \
-		g_counter.ch[C].ad_averaged_value -= g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index]; \
-		g_counter.ch[C].ad_fitter_buff[g_counter.ch[C].ad_fitter_index] = AD[C]; \
-		g_counter.ch[C].ad_averaged_value += AD[C]; \
-		AD[C] = g_counter.ch[C].ad_averaged_value / AD_FITTER_BUFF_SIZE; \
-		g_counter.ch[C].ad_fitter_index++; \
+		AD_PRE_FITTER (AD,BUF,C,S) \
 		if (AD[C] > g_counter.ch[C].ad_max){ \
 			g_counter.ch[C].ad_max = AD[C]; \
 		} \

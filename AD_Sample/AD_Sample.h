@@ -5,6 +5,7 @@
 #define CHANEL_NUM 12 //为12个通道
 #define CHANEL_SENSOR_NUM 8
 
+#define START_DATA 5
 #define PROCESS_RDY 15
 
 
